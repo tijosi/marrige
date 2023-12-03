@@ -4,8 +4,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('auth:sanctum')->get('/autenticacao', function (Request $request) {
+    $user = $request->user();
+
+    return $user;
 });
 
 Route::get('/', function() {
@@ -17,7 +19,7 @@ Route::get('/', function() {
 
 });
 
-Route::get('/login', function (Request $request) {
+Route::any('/login', function (Request $request) {
 
     $telefone = $request->telefone;
     $user = User::where('telefone', '=', $telefone)->first();
