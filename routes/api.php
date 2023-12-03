@@ -9,12 +9,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('/', function() {
-
     return response()->json([
         'status' => 'success',
         'data' => 'API Funcionando!'
     ]);
-
 });
 
 Route::post('/login', function (Request $request) {
