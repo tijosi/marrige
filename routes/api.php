@@ -1,7 +1,7 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -15,10 +15,10 @@ Route::get('/', function() {
     ]);
 });
 
-Route::post('/login', function (Request $request) {
+Route::get('/login', function (Request $request) {
 
     $telefone = $request->telefone;
-    $user = DB::table('users')->where('telefone', '=', $telefone)->first();
+    $user = User::where('telefone', '=', $telefone)->first();
 
     if (empty($user)) {
         throw new Exception('Convidado não encontrado, revise o número');
