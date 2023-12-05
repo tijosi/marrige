@@ -4,10 +4,23 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->get('/autenticacao', function (Request $request) {
-    $user = $request->user();
+// Route::middleware('auth:sanctum')->get('/autenticacao', function (Request $request) {
+//     $user = $request->user();
+//     return $user;
+// });
 
-    return $user;
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/autenticacao', function(Request $request) {
+        $user = $request->user();
+        return $user;
+
+    });
+
+    Route::get('/admin', function(Request $request) {
+        $user = $request->user();
+        return $user->role_id == 1;
+
+    });
 });
 
 Route::get('/', function() {
@@ -25,7 +38,7 @@ Route::any('/login', function (Request $request) {
     $user = User::where('telefone', '=', $telefone)->first();
 
     if (empty($user)) {
-        throw new Exception('Convidado não encontrado, revise o número');
+        throw new Exception('Convidado não encontrado, por favor revise o número de telefone');
     }
 
     $token = $user->createToken('token-name')->plainTextToken;
