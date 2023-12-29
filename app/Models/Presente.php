@@ -18,13 +18,18 @@ class Presente extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-    	'nome',
-    	'valor_min',
-    	'valor_max',
-    	'level',
-    	'name_img',
-    	'img_url'
+        'nome',
+        'valor_min',
+        'valor_max',
+        'level',
+        'name_img',
+        'img_url',
+        'name_selected_id',
+        'flg_disponivel',
+        'selected_at'
     ];
+
+    public $timestamps = false;
 
     /**
      * The attributes that should be hidden for serialization.

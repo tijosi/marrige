@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PresentesController;
 use App\Models\Presente;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -23,21 +24,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     });
 
-    Route::get('/presentes', function(Request $request) {
-
-        $presentes = Presente::all();
-
-        $varPontos = 12;
-
-        foreach ($presentes as $key) {
-            $key->path = asset('images/presentes/' . $key->name_img);
-            $key->valor = ($key->valor_min + $key->valor_max)/2;
-            $key->pontos = $key->valor/$varPontos;
-        }
-
-        return $presentes->toArray();
-
-    });
+    Route::any('/presentes', [PresentesController::class, 'handle']);
 });
 
 Route::get('/', function() {
