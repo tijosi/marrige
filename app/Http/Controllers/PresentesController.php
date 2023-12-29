@@ -7,6 +7,7 @@ use App\Models\User;
 use DateTime;
 use DateTimeZone;
 use Exception;
+use Illuminate\Contracts\Cache\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -44,9 +45,9 @@ class PresentesController extends Controller {
 
         $presentes = Presente::all();
 
-        foreach ($presentes as $key) {
-            $key->path = asset('img/presentes/' . $key->name_img);
-            $key->valor = ($key->valor_min + $key->valor_max)/2;
+        foreach ($presentes as $presente) {
+            $presente->path = Storage::disk('s3')->url('img/presentes/' . $presente->name_img);
+            $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
         }
 
         return $presentes->toArray();
@@ -58,11 +59,14 @@ class PresentesController extends Controller {
         $data = $request->input();
         $image = $request->file('file');
 
+
         if (!in_array($image->extension(), ['jpg', 'png', 'jpeg', 'eps', 'psd'])) {
             throw new Exception('O Arquivo não é uma imagem');
         }
 
         $imageName = time() . '_' . str_replace(' ', '_', $request['nome_presente']) . '.' . $image->getClientOriginalExtension();
+        $path = 'img/presentes/' . $imageName;
+
         $data['vlr_minimo'] = $data['vlr_minimo'] ?? 0;
         $data['vlr_maximo'] = $data['vlr_maximo'] ?? 0;
         $media = ($data['vlr_minimo'] + $data['vlr_maximo'])/2;
@@ -74,6 +78,8 @@ class PresentesController extends Controller {
             }
         }
 
+        Storage::disk('s3')->put($path, file_get_contents($image));
+
         $record = new Presente();
         $record->nome               = $data['nome_presente'];
         $record->valor_min          = $data['vlr_minimo'];
@@ -83,9 +89,6 @@ class PresentesController extends Controller {
         $record->img_url            = $data['link'];
         $record->flg_disponivel     = 1;
         $record->save();
-
-        $image->move(public_path('img/presentes'), $imageName);
-
 
         return $record;
 
