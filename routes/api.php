@@ -1,7 +1,7 @@
 <?php
 
+use App\Enums\TEnum;
 use App\Http\Controllers\PresentesController;
-use App\Models\Presente;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +26,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::any('/presentes', [PresentesController::class, 'handle']);
 });
+
+Route::get('/enum/{enumClass}', [TEnum::class, 'getAllProperties']);
 
 Route::get('/', function() {
 

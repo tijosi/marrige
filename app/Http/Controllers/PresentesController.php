@@ -84,9 +84,9 @@ class PresentesController extends Controller {
         $record->nome               = $data['nome_presente'];
         $record->valor_min          = $data['vlr_minimo'];
         $record->valor_max          = $data['vlr_maximo'];
-        $record->level              = $level;
+        $record->level              = $data['categoria'];
         $record->name_img           = $imageName;
-        $record->img_url            = $data['link'];
+        $record->img_url            = $data['link'] ?? null;
         $record->flg_disponivel     = 1;
         $record->save();
 
