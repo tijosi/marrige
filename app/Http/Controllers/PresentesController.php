@@ -34,6 +34,10 @@ class PresentesController extends Controller {
                 return $this->save($request);
                 break;
 
+            case 'DELETE':
+                return $this->delete($request);
+                break;
+
             default:
                 throw new Exception('Método de Requisição não indentificado');
                 break;
@@ -91,6 +95,32 @@ class PresentesController extends Controller {
         $record->save();
 
         return $record;
+
+    }
+
+    private function delete( Request $request ) {
+
+        if (Auth::user()->role_id != 1) {
+            throw new Exception('Não Autorizado');
+        }
+
+        $presenteId = $request['presenteId'];
+
+        if (empty($presenteId)) {
+            throw new Exception('Por favor passsar o ID do presente');
+        }
+
+        $presente = Presente::find($presenteId);
+
+        if (empty($presente)) {
+            throw new Exception('Presente não encontrado');
+        }
+
+        $path = Storage::disk('s3')->url('img/presentes/' . $presente->name_img);
+        Storage::disk('s3')->delete($path);
+        $presente->delete();
+
+        return TRUE;
 
     }
 
