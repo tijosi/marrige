@@ -124,18 +124,20 @@ class PresentesController extends Controller {
 
     }
 
-    public function confirmPresente(Request $request) {
+    public function confirmar(Request $request) {
 
-        $record = Presente::find($request->id);
+        if (empty($request['presenteId'])) {
+            throw new Exception('Por favor passsar o ID do presente');
+        }
 
-        if ($record->flg_disponivel != 1) throw new Exception('Item já foi Selecionado');
+        $presente = Presente::find($request['presenteId']);
 
-        $user = User::find(Auth::user()->id);
+        if ($presente->flg_disponivel != 1) throw new Exception('Presente já foi Selecionado');
 
-        $record->flg_disponivel     = 0;
-        $record->name_selected      = $user->name;
-        $record->selected_at        = $this->toMySQL('now', true);
-        $record->save();
+        $presente->flg_disponivel       = 0;
+        $presente->name_selected_id     = Auth::user()->id;
+        $presente->selected_at          = $this->toMySQL('now', true);
+        $presente->save();
 
         // $historico = new Historico();
         // $historico->title       = 'Presente Selecionado';
@@ -146,7 +148,7 @@ class PresentesController extends Controller {
 
         // return $historico;
 
-        return TRUE;
+        return $presente;
     }
 
     public static function toMySQL($date, $time = FALSE, $fromTimeZone = 'UTC', $toTimeZone = 'America/Sao_Paulo') {

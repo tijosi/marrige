@@ -8,6 +8,7 @@ enum PresentesAreaEnum {
     case SALA;
     case SERVICO;
     case ESCRITORIO;
+    case GERAL;
 
     public function getProperties(): array {
 
@@ -26,7 +27,8 @@ enum PresentesAreaEnum {
             self::QUARTO        => 'QUARTO',
             self::SALA          => 'SALA',
             self::SERVICO       => 'SERVIÇO',
-            self::ESCRITORIO    => 'ESCRITÓRIO'
+            self::ESCRITORIO    => 'ESCRITÓRIO',
+            self::GERAL         => 'GERAL'
         };
 
     }
@@ -34,11 +36,12 @@ enum PresentesAreaEnum {
     private function getColor(): string {
 
         return match ($this) {
-            self::COZINHA       => '#FF8C42',
+            self::COZINHA       => '#86BA90',
             self::QUARTO        => '#63ADF2',
             self::SALA          => '#4C0827',
             self::SERVICO       => '#B47EB3',
-            self::ESCRITORIO    => '#304D6D'
+            self::ESCRITORIO    => '#304D6D',
+            self::GERAL         => '#dfa06e'
         };
 
     }

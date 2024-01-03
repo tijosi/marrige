@@ -25,6 +25,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::any('/presentes', [PresentesController::class, 'handle']);
+    Route::post('/presentes/confirmar', [PresentesController::class, 'confirmar']);
 });
 
 Route::get('/enum/{enumClass}', [TEnum::class, 'getAllProperties']);
