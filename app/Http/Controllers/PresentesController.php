@@ -3,15 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Presente;
-use App\Models\User;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use DateTime;
 use DateTimeZone;
 use Exception;
-use Illuminate\Contracts\Cache\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 
 class PresentesController extends Controller {
 
@@ -47,16 +44,12 @@ class PresentesController extends Controller {
     }
 
     private function listAll() {
-
         $presentes = Presente::all();
-
         foreach ($presentes as $presente) {
-            $presente->path = URL::to('/') . Storage::url('img/presentes/' . $presente->name_img);
+            $presente->path = $presente->path_img;
             $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
         }
-
         return $presentes->toArray();
-
     }
 
     private function save( Request $request ) {
@@ -70,7 +63,7 @@ class PresentesController extends Controller {
         }
 
         $imageName = time() . '_' . str_replace(' ', '_', $request['nome_presente']) . '.' . $image->getClientOriginalExtension();
-        $path = 'img/presentes/' . $imageName;
+        $path = 'img/presentes/';
 
         $data['vlr_minimo'] = $data['vlr_minimo'] ?? 0;
         $data['vlr_maximo'] = $data['vlr_maximo'] ?? 0;
@@ -83,7 +76,10 @@ class PresentesController extends Controller {
             }
         }
 
-        $request->file('file')->storeAs('public/img/presentes', $imageName);
+        $uploadImg = Cloudinary::upload($request->file('file')->getRealPath(),[
+            'folder' => $path,
+            'public_id' => $imageName,
+        ])->getSecurePAth();
 
         $record = new Presente();
         $record->nome               = $data['nome_presente'];
@@ -91,6 +87,7 @@ class PresentesController extends Controller {
         $record->valor_max          = $data['vlr_maximo'];
         $record->level              = $data['categoria'];
         $record->name_img           = $imageName;
+        $record->path_img           = $uploadImg;
         $record->img_url            = $data['link'] ?? null;
         $record->flg_disponivel     = 1;
         $record->save();
@@ -114,10 +111,7 @@ class PresentesController extends Controller {
             throw new Exception('Presente não encontrado');
         }
 
-        if (Storage::disk('public')->exists('img/presentes/' . $presente->name_img)) {
-            Storage::disk('public')->delete('img/presentes/' . $presente->name_img);
-        }
-
+        Cloudinary::destroy('img/presentes/' . $presente->name_img);
         $presente->delete();
         return TRUE;
     }
