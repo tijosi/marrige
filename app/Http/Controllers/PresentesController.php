@@ -11,6 +11,7 @@ use Illuminate\Contracts\Cache\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class PresentesController extends Controller {
 
@@ -50,7 +51,7 @@ class PresentesController extends Controller {
         $presentes = Presente::all();
 
         foreach ($presentes as $presente) {
-            $presente->path = Storage::disk('s3')->url('img/presentes/' . $presente->name_img);
+            $presente->path = URL::to('/') . Storage::url('img/presentes/' . $presente->name_img);
             $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
         }
 
@@ -82,7 +83,7 @@ class PresentesController extends Controller {
             }
         }
 
-        Storage::disk('s3')->put($path, file_get_contents($image));
+        $request->file('file')->storeAs('public/img/presentes', $imageName);
 
         $record = new Presente();
         $record->nome               = $data['nome_presente'];
@@ -99,29 +100,26 @@ class PresentesController extends Controller {
     }
 
     private function delete( Request $request ) {
-
         if (Auth::user()->role_id != 1) {
             throw new Exception('Não Autorizado');
         }
 
-        $presenteId = $request['presenteId'];
-
-        if (empty($presenteId)) {
+        if (empty($request['presenteId'])) {
             throw new Exception('Por favor passsar o ID do presente');
         }
 
-        $presente = Presente::find($presenteId);
+        $presente = Presente::find($request['presenteId']);
 
         if (empty($presente)) {
             throw new Exception('Presente não encontrado');
         }
 
-        $path = Storage::disk('s3')->url('img/presentes/' . $presente->name_img);
-        Storage::disk('s3')->delete($path);
+        if (Storage::disk('public')->exists('img/presentes/' . $presente->name_img)) {
+            Storage::disk('public')->delete('img/presentes/' . $presente->name_img);
+        }
+
         $presente->delete();
-
         return TRUE;
-
     }
 
     public function confirmar(Request $request) {

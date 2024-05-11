@@ -16,7 +16,6 @@ return new class extends Migration
             $table->integer('user_id')->nullable();
             $table->boolean('confirmacao_1')->nullable();
             $table->boolean('confirmacao_2')->nullable();
-            $table->boolean('confirmacao_3')->nullable();
             $table->dateTime('updated_at')->nullable();
             $table->dateTime('btn_close_at')->nullable();
         });
