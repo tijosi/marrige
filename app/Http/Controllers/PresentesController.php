@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PresentesController extends Controller {
 
+
     const MYSQL_DATE_FORMAT = 'Y-m-d';
     const MYSQL_DATETIME_FORMAT = 'Y-m-d H:i:s';
 
@@ -153,4 +154,5 @@ class PresentesController extends Controller {
 
         return $dt->format($format);
     }
+
 }
