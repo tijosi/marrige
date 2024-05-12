@@ -3,13 +3,8 @@
 use App\Enums\TEnum;
 use App\Http\Controllers\PresentesController;
 use App\Models\User;
-use App\Models\WebhookPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use MercadoPago\Client\Preference\PreferenceClient;
-use MercadoPago\MercadoPagoConfig;
-use MercadoPago\Resources\MerchantOrder\Item;
-use MercadoPago\Resources\Payment;
 
 // Route::middleware('auth:sanctum')->get('/autenticacao', function (Request $request) {
 //     $user = $request->user();
@@ -44,65 +39,35 @@ Route::get('/', function() {
 
 });
 
-Route::get('/payment', function() {
+Route::any('/payment', function(Request $request) {
+    $accessToken = 'APP_USR-8480088043089622-051113-6de018eb795661ea415c36811daac4f7-765193147';
 
-    MercadoPagoConfig::setAccessToken('APP_USR-8480088043089622-051113-6de018eb795661ea415c36811daac4f7-765193147');
-    MercadoPagoConfig::setRuntimeEnviroment(MercadoPagoConfig::LOCAL);
+    $paymentId = '77911261241';
 
-    $product1 = array(
-        "id" => "1234567890",
-        "title" => "Product 1 Title",
-        "description" => "Product 1 Description",
-        "currency_id" => "BRL",
-        "quantity" => 1,
-        "unit_price" => 10.0
+    $url = "https://api.mercadopago.com/v1/payments/$paymentId";
+
+    $headers = array(
+        "Content-Type: application/json",
+        "Authorization: Bearer $accessToken"
     );
 
-    $items = array($product1);
-
-    $payer = array(
-        "name" => 'Edson',
-        "surname" => 'Martins',
-        "email" => '64992899016',
+    $data = array(
+        "status" => "cancelled" // Define o status do pagamento como cancelado
     );
 
-    $paymentMethods = [
-        "excluded_payment_methods" => [],
-        "installments" => 12,
-        "default_installments" => 1
-    ];
+    $ch = curl_init();
 
-    $backUrls = array(
-        'success' => 'mercadopago.success',
-        'failure' => 'mercadopago.failed'
-    );
+    // Configura as opções da requisição cURL
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-    $request = [
-        "items" => $items,
-        "payer" => $payer,
-        "payment_methods" => $paymentMethods,
-        "back_urls" => $backUrls,
-        "statement_descriptor" => "NAME_DISPLAYED_IN_USER_BILLING",
-        "external_reference" => "1234567890",
-        "expires" => false,
-        "auto_return" => 'approved',
-    ];
+    $response = curl_exec($ch);
 
-    // Instantiate a new Preference Client
-    $client = new PreferenceClient();
+    return $response;
 
-    // Send the request that will create the new preference for user's checkout flow
-    $preference = $client->create($request);
-
-    // Useful props you could use from this object is 'init_point' (URL to Checkout Pro) or the 'id'
-    return $preference;
-
-});
-
-Route::any('/webhook_payment', function(Request $request) {
-    $webhook = new WebhookPayment();
-    $webhook->json = json_encode($request->input());
-    $webhook->save();
 });
 
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GiftPayment;
 use App\Models\Presente;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use DateTime;
@@ -9,6 +10,9 @@ use DateTimeZone;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\MercadoPagoConfig;
 
 class PresentesController extends Controller {
 
@@ -118,19 +122,25 @@ class PresentesController extends Controller {
     }
 
     public function confirmar(Request $request) {
-
         if (empty($request['presenteId'])) {
             throw new Exception('Por favor passsar o ID do presente');
         }
 
         $presente = Presente::find($request['presenteId']);
-
         if ($presente->flg_disponivel != 1) throw new Exception('Presente já foi Selecionado');
 
-        $presente->flg_disponivel       = 0;
-        $presente->name_selected_id     = Auth::user()->id;
-        $presente->selected_at          = $this->toMySQL('now', true);
-        $presente->save();
+        switch ($request['tipo']) {
+            case 'Valor':
+                $payment = $this->gerarPagamento($presente);
+                break;
+
+            case 'Presente':
+                $presente->flg_disponivel       = 0;
+                $presente->name_selected_id     = Auth::user()->id;
+                $presente->selected_at          = $this->toMySQL('now', true);
+                $presente->save();
+                break;
+        }
 
         // $historico = new Historico();
         // $historico->title       = 'Presente Selecionado';
@@ -141,7 +151,77 @@ class PresentesController extends Controller {
 
         // return $historico;
 
-        return $presente;
+        return $request['tipo'] == 'Valor' ? (object) [ 'link' => $payment] : $presente;
+    }
+
+    private function gerarPagamento($presente) {
+
+        if (!empty($presente->url_payment)) {
+            $payment = DB::table('GiftPayment')->where('url', '=', $presente->url_payment);
+        }
+
+        MercadoPagoConfig::setAccessToken('APP_USR-8480088043089622-051113-6de018eb795661ea415c36811daac4f7-765193147');
+
+        $produto = array(
+            "id" => $presente->id,
+            "title" => $presente->nome,
+            "description" => $presente->nome,
+            "currency_id" => "BRL",
+            "quantity" => 1,
+            "unit_price" => ($presente->valor_min + $presente->valor_max)/2
+        );
+
+        $items[] = $produto;
+
+        $payer = array(
+            "name" => explode(' ', Auth::user()->name)[0],
+            "surname" => explode(' ', Auth::user()->name)[1],
+            "phone" => [
+                "area_code" => substr(Auth::user()->telefone, 0, 2),
+                "number" => substr(Auth::user()->telefone, 2)
+            ],
+        );
+
+        $paymentMethods = [
+            "excluded_payment_methods" => [],
+            "installments" => 6,
+            "default_installments" => 1
+        ];
+
+        $backUrls = array(
+            'success' => 'mercadopago.success',
+            'failure' => 'mercadopago.failed'
+        );
+
+        $request = [
+            "items" => $items,
+            "payer" => $payer,
+            "payment_methods" => $paymentMethods,
+            "back_urls" => $backUrls,
+            "statement_descriptor" => "CASA_EDSONSWELEN",
+            "external_reference" => $presente->id,
+            "expires" => true,
+            "auto_return" => 'approved',
+        ];
+
+        $client = new PreferenceClient();
+        $preference = $client->create($request);
+
+        $giftPayment = new GiftPayment();
+        $giftPayment->payment_id    = null;
+        $giftPayment->user_id       = Auth::user()->id;
+        $giftPayment->presente_id   = $presente->id;
+        $giftPayment->valor         = $produto['unit_price'];
+        $giftPayment->status        = 'pedding';
+        $giftPayment->url           = $preference->init_point;
+        $giftPayment->dt_created    = $this->toMySQL('now', true);
+        $giftPayment->dt_updated    = $this->toMySQL('now', true);
+        $giftPayment->save();
+
+        $presente->url_payment = $preference->init_point;
+        $presente->save();
+
+        return $preference->init_point;
     }
 
     public static function toMySQL($date, $time = FALSE, $fromTimeZone = 'UTC', $toTimeZone = 'America/Sao_Paulo') {
