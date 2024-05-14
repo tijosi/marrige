@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\helpers\Helper;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class WebhookPayment extends Model
 {
@@ -15,7 +18,11 @@ class WebhookPayment extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'json',
+        'action',
+        'api_version',
+        'date_created',
+        'user_id',
+        'payment_id'
     ];
 
     public $timestamps = false;
@@ -33,4 +40,29 @@ class WebhookPayment extends Model
      * @var array<string, string>
      */
     protected $casts = [];
+
+    public static function salvarWebhook(Request $request) {
+        $data = $request->input();
+
+        if ($data['action'] == 'payment.created') {
+            $payment = GiftPayment::latest('id')->first();
+            $payment->payment_id = $data['data']->id;
+        } else {
+            $payment = GiftPayment::where('id', '=', $data['data']->id)->first();
+            $response = Http::get("https://api.mercadopago.com/v1/payments/{$payment->payment_id}");
+            $payment->status = json_decode($response->body())->status;
+            $payment->dt_updated = Helper::toMySQL($data['date_created'], true);
+            $payment->save();
+        }
+
+        $webhook = new WebhookPayment();
+        $webhook->action        = $data['action'];
+        $webhook->api_version   = $data['api_version'];
+        $webhook->date_created  = $data['date_created'];
+        $webhook->user_id       = $data['user_id'];
+        $webhook->payment_id    = $data['id'];
+        $webhook->save();
+
+        return $webhook;
+    }
 }
