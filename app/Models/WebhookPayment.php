@@ -24,7 +24,8 @@ class WebhookPayment extends Model
         'api_version',
         'date_created',
         'user_id',
-        'payment_id'
+        'payment_id',
+        'json',
     ];
 
     public $timestamps = false;
@@ -46,8 +47,9 @@ class WebhookPayment extends Model
     public static function salvarWebhook(Request $request) {
         $data = $request->input();
 
+
         // if ($data['action'] == 'payment.created') {
-        //     $payment = GiftPayment::latest('id')->first();
+        //     $payment = new GiftPayment();
         //     if (!empty($payment)) {
         //         $payment->payment_id = $data['data']['id'];
         //     }
@@ -62,25 +64,13 @@ class WebhookPayment extends Model
         $webhook = new WebhookPayment();
         $webhook->action        = $data['action'];
         $webhook->api_version   = $data['api_version'];
-        $webhook->date_created  = self::toMySQL($data['date_created'], true);
+        $webhook->date_created  = Helper::toMySQL($data['date_created'], true);
         $webhook->user_id       = $data['user_id'];
         $webhook->payment_id    = $data['id'];
+        $webhook->json          = json_encode($data);
         $webhook->save();
 
         return $webhook;
     }
 
-    const MYSQL_DATE_FORMAT = 'Y-m-d';
-    const MYSQL_DATETIME_FORMAT = 'Y-m-d H:i:s';
-
-    public static function toMySQL($date, $time = FALSE, $fromTimeZone = 'UTC', $toTimeZone = 'America/Sao_Paulo') {
-        if (empty(trim($date))) return NULL;
-        $format = $time ? self::MYSQL_DATETIME_FORMAT : self::MYSQL_DATE_FORMAT;
-
-        $dt = new DateTime($date, new DateTimeZone($fromTimeZone));
-
-        $dt->setTimezone(new DateTimeZone($toTimeZone));
-
-        return $dt->format($format);
-    }
 }
