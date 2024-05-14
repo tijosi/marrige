@@ -46,7 +46,9 @@ class WebhookPayment extends Model
 
         if ($data['action'] == 'payment.created') {
             $payment = GiftPayment::latest('id')->first();
-            $payment->payment_id = $data['data']['id'];
+            if (!empty($payment)) {
+                $payment->payment_id = $data['data']['id'];
+            }
         } else {
             $payment = GiftPayment::where('id', '=', $data['data']['id'])->first();
             $response = Http::get("https://api.mercadopago.com/v1/payments/{$payment->payment_id}");
