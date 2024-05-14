@@ -46,18 +46,18 @@ class WebhookPayment extends Model
     public static function salvarWebhook(Request $request) {
         $data = $request->input();
 
-        if ($data['action'] == 'payment.created') {
-            $payment = GiftPayment::latest('id')->first();
-            if (!empty($payment)) {
-                $payment->payment_id = $data['data']['id'];
-            }
-        } else {
-            $payment = GiftPayment::where('id', '=', $data['data']['id'])->first();
-            $response = Http::get("https://api.mercadopago.com/v1/payments/{$payment->payment_id}");
-            $payment->status = json_decode($response->body())->status;
-            $payment->dt_updated = Helper::toMySQL($data['date_created'], true);
-            $payment->save();
-        }
+        // if ($data['action'] == 'payment.created') {
+        //     $payment = GiftPayment::latest('id')->first();
+        //     if (!empty($payment)) {
+        //         $payment->payment_id = $data['data']['id'];
+        //     }
+        // } else {
+        //     $payment = GiftPayment::where('id', '=', $data['data']['id'])->first();
+        //     $response = Http::get("https://api.mercadopago.com/v1/payments/{$payment->payment_id}");
+        //     $payment->status = json_decode($response->body())->status;
+        //     $payment->dt_updated = Helper::toMySQL($data['date_created'], true);
+        //     $payment->save();
+        // }
 
         $webhook = new WebhookPayment();
         $webhook->action        = $data['action'];
