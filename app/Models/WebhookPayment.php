@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\helpers\Helper;
+use DateTime;
+use DateTimeZone;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -60,11 +62,25 @@ class WebhookPayment extends Model
         $webhook = new WebhookPayment();
         $webhook->action        = $data['action'];
         $webhook->api_version   = $data['api_version'];
-        $webhook->date_created  = Helper::toMySQL($data['date_created'], true);
+        $webhook->date_created  = self::toMySQL($data['date_created'], true);
         $webhook->user_id       = $data['user_id'];
         $webhook->payment_id    = $data['id'];
         $webhook->save();
 
         return $webhook;
+    }
+
+    const MYSQL_DATE_FORMAT = 'Y-m-d';
+    const MYSQL_DATETIME_FORMAT = 'Y-m-d H:i:s';
+
+    public static function toMySQL($date, $time = FALSE, $fromTimeZone = 'UTC', $toTimeZone = 'America/Sao_Paulo') {
+        if (empty(trim($date))) return NULL;
+        $format = $time ? self::MYSQL_DATETIME_FORMAT : self::MYSQL_DATE_FORMAT;
+
+        $dt = new DateTime($date, new DateTimeZone($fromTimeZone));
+
+        $dt->setTimezone(new DateTimeZone($toTimeZone));
+
+        return $dt->format($format);
     }
 }
