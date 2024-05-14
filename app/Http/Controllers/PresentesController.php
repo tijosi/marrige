@@ -2,23 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\helpers\Helper;
 use App\Models\GiftPayment;
 use App\Models\Presente;
+use App\Models\Presentes;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
-use DateTime;
-use DateTimeZone;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use MercadoPago\Client\Preference\PreferenceClient;
-use MercadoPago\MercadoPagoConfig;
-
 class PresentesController extends Controller {
-
-
-    const MYSQL_DATE_FORMAT = 'Y-m-d';
-    const MYSQL_DATETIME_FORMAT = 'Y-m-d H:i:s';
 
     const LEVEL = [
         ['min_valor' => 751,    'descricao' => 'ALTO'],
@@ -51,6 +43,7 @@ class PresentesController extends Controller {
     private function listAll() {
         $presentes = Presente::all();
         foreach ($presentes as $presente) {
+            $presente = Presente::verificaPresente($presente);
             $presente->path = $presente->path_img;
             $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
         }
@@ -61,7 +54,6 @@ class PresentesController extends Controller {
 
         $data = $request->input();
         $image = $request->file('file');
-
 
         if (!in_array($image->extension(), ['jpg', 'png', 'jpeg', 'eps', 'psd'])) {
             throw new Exception('O Arquivo não é uma imagem');
@@ -110,7 +102,11 @@ class PresentesController extends Controller {
             throw new Exception('Por favor passsar o ID do presente');
         }
 
-        $presente = Presente::find($request['presenteId']);
+        $presente = Presente::verificaPresente(Presente::find($request['presenteId']));
+
+        if (!empty($presente->payment_url)) {
+            throw new Exception('Presente está em processo de Pagamento, Consulte seu Noivo :D');
+        }
 
         if (empty($presente)) {
             throw new Exception('Presente não encontrado');
@@ -131,13 +127,13 @@ class PresentesController extends Controller {
 
         switch ($request['tipo']) {
             case 'Valor':
-                $payment = $this->gerarPagamento($presente);
+                $payment = GiftPayment::gerarPagamentoPresente($presente);
                 break;
 
             case 'Presente':
                 $presente->flg_disponivel       = 0;
                 $presente->name_selected_id     = Auth::user()->id;
-                $presente->selected_at          = $this->toMySQL('now', true);
+                $presente->selected_at          = Helper::toMySQL('now', true);
                 $presente->save();
                 break;
         }
@@ -146,93 +142,11 @@ class PresentesController extends Controller {
         // $historico->title       = 'Presente Selecionado';
         // $historico->user_name   = $user->name;
         // $historico->body        = 'Confirmou o presente <b>' .  $request->nome . '</b>. Vamos Comemorar!';
-        // $historico->created_at  = $this->toMySQL('now', true);
+        // $historico->created_at  = Helper::toMySQL('now', true);
         // $historico->save();
 
         // return $historico;
 
         return $request['tipo'] == 'Valor' ? (object) [ 'link' => $payment] : $presente;
     }
-
-    private function gerarPagamento($presente) {
-
-        if (!empty($presente->url_payment)) {
-            $payment = DB::table('GiftPayment')->where('url', '=', $presente->url_payment);
-        }
-
-        MercadoPagoConfig::setAccessToken('APP_USR-8480088043089622-051113-6de018eb795661ea415c36811daac4f7-765193147');
-
-        $produto = array(
-            "id" => $presente->id,
-            "title" => $presente->nome,
-            "description" => $presente->nome,
-            "currency_id" => "BRL",
-            "quantity" => 1,
-            "unit_price" => ($presente->valor_min + $presente->valor_max)/2
-        );
-
-        $items[] = $produto;
-
-        $payer = array(
-            "name" => explode(' ', Auth::user()->name)[0],
-            "surname" => explode(' ', Auth::user()->name)[1],
-            "phone" => [
-                "area_code" => substr(Auth::user()->telefone, 0, 2),
-                "number" => substr(Auth::user()->telefone, 2)
-            ],
-        );
-
-        $paymentMethods = [
-            "excluded_payment_methods" => [],
-            "installments" => 6,
-            "default_installments" => 1
-        ];
-
-        $backUrls = array(
-            'success' => 'mercadopago.success',
-            'failure' => 'mercadopago.failed'
-        );
-
-        $request = [
-            "items" => $items,
-            "payer" => $payer,
-            "payment_methods" => $paymentMethods,
-            "back_urls" => $backUrls,
-            "statement_descriptor" => "CASA_EDSONSWELEN",
-            "external_reference" => $presente->id,
-            "expires" => true,
-            "auto_return" => 'approved',
-        ];
-
-        $client = new PreferenceClient();
-        $preference = $client->create($request);
-
-        $giftPayment = new GiftPayment();
-        $giftPayment->payment_id    = null;
-        $giftPayment->user_id       = Auth::user()->id;
-        $giftPayment->presente_id   = $presente->id;
-        $giftPayment->valor         = $produto['unit_price'];
-        $giftPayment->status        = 'pedding';
-        $giftPayment->url           = $preference->init_point;
-        $giftPayment->dt_created    = $this->toMySQL('now', true);
-        $giftPayment->dt_updated    = $this->toMySQL('now', true);
-        $giftPayment->save();
-
-        $presente->url_payment = $preference->init_point;
-        $presente->save();
-
-        return $preference->init_point;
-    }
-
-    public static function toMySQL($date, $time = FALSE, $fromTimeZone = 'UTC', $toTimeZone = 'America/Sao_Paulo') {
-        if (empty(trim($date))) return NULL;
-        $format = $time ? self::MYSQL_DATETIME_FORMAT : self::MYSQL_DATE_FORMAT;
-
-        $dt = new DateTime($date, new DateTimeZone($fromTimeZone));
-
-        $dt->setTimezone(new DateTimeZone($toTimeZone));
-
-        return $dt->format($format);
-    }
-
 }

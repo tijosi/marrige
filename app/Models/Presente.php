@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use DateTime;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -26,7 +27,8 @@ class Presente extends Model
         'img_url',
         'name_selected_id',
         'flg_disponivel',
-        'selected_at'
+        'selected_at',
+        'payment_url'
     ];
 
     public $timestamps = false;
@@ -44,4 +46,42 @@ class Presente extends Model
      * @var array<string, string>
      */
     protected $casts = [];
+
+    const PRESENTE = 'PRESENTE';
+    const VALOR = 'VALOR';
+
+    public static function verificaPresente(self $presente) {
+        if ($presente->flg_disponivel == 0 && $presente->tipo_selected == self::VALOR) {
+            $payment = GiftPayment::where('url', '=', $presente->payment_url)->first();
+
+            if ($payment->status == GiftPayment::APROVADO) return $presente;
+
+            if ($payment->status == GiftPayment::EM_PROGRESSO) {
+                $paymentApi = GiftPayment::buscarPagamento($payment->payment_id);
+
+                if (
+                    $paymentApi->status_detail == GiftPayment::PENDENTE_TRANSFERENCIA   ||
+                    $paymentApi->status_detail == GiftPayment::PAGAMENTO_EM_PROCESSADO  ||
+                    $paymentApi->status_detail == GiftPayment::EM_ANALISE
+                ) return $presente;
+
+                $dtNow = new DateTime();
+                $dtCreation = new DateTime($payment->dt_created);
+
+                if ($dtNow->diff($dtCreation) >= 1) {
+                    $cancelado = GiftPayment::cancelaPagamento($payment->payment_id);
+
+                    if ($cancelado) {
+                        $presente->payment_url = null;
+                        $presente->flg_disponivel = 1;
+                        $presente->save();
+
+                        $payment->status = GiftPayment::CANCELADO;
+                        $payment->save();
+                    }
+                }
+            }
+        }
+        return $presente;
+    }
 }

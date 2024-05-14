@@ -18,11 +18,12 @@ return new class extends Migration
             $table->dateTime('date_created')->nullable();
             $table->string('user_id')->nullable();
             $table->string('payment_id')->nullable();
+            $table->text('json')->nullable();
         });
 
         Schema::create('gift_payment', function (Blueprint $table) {
             $table->id();
-            $table->integer('payment_id')->nullable();
+            $table->bigInteger('payment_id')->nullable();
             $table->integer('user_id')->nullable();
             $table->integer('presente_id')->nullable();
             $table->string('valor')->nullable();
@@ -32,8 +33,9 @@ return new class extends Migration
             $table->dateTime('dt_updated')->nullable();
         });
 
-        Schema::table('presentes', function ($table) {
-            $table->text('url_payment')->nullable();
+        Schema::table('presentes', function (Blueprint $table) {
+            $table->string('tipo_selected')->nullable();
+            $table->text('payment_url')->nullable();
         });
     }
 
@@ -45,8 +47,9 @@ return new class extends Migration
         Schema::dropIfExists('webhook_payment');
         Schema::dropIfExists('gift_payment');
 
-        Schema::table('presentes', function ($table) {
-            $table->dropColumn('url_payment');
+        Schema::table('presentes', function (Blueprint $table) {
+            $table->dropColumn('tipo_selected');
+            $table->dropColumn('payment_url');
         });
     }
 };

@@ -48,25 +48,36 @@ class WebhookPayment extends Model
         $data = $request->input();
 
 
-        // if ($data['action'] == 'payment.created') {
-        //     $payment = new GiftPayment();
-        //     if (!empty($payment)) {
-        //         $payment->payment_id = $data['data']['id'];
-        //     }
-        // } else {
-        //     $payment = GiftPayment::where('id', '=', $data['data']['id'])->first();
-        //     $response = Http::get("https://api.mercadopago.com/v1/payments/{$payment->payment_id}");
-        //     $payment->status = json_decode($response->body())->status;
-        //     $payment->dt_updated = Helper::toMySQL($data['date_created'], true);
-        //     $payment->save();
-        // }
+        $paymentApi = GiftPayment::buscarPagamento($data['data_id']);
+        if ($data['action'] == 'payment.created') {
+            $payment = new GiftPayment();
+            $paymentApi->additional_info->payer->first_name = '1 - Edson';
+            $payment->payment_id    = $data['data_id'];
+            $payment->user_id       = trim(explode(' - ', $paymentApi->additional_info->payer->first_name)[0] ?? '');
+            $payment->presente_id   = $paymentApi->additional_info->items[0]->id;
+            $payment->valor         = $paymentApi->additional_info->items[0]->unit_price;
+            $payment->status        = $paymentApi->status;
+            $payment->url           = $paymentApi->point_of_interaction->transaction_data->ticket_url;
+            $payment->dt_created    = Helper::toMySQL('now', true);
+            $payment->dt_updated    = Helper::toMySQL('now', true);
+            $payment->save();
+
+            $presente = Presente::where('id', '=', $payment->presente_id)->first();
+            $presente->flg_disponivel = 0;
+            $presente->save();
+        } else if ($data['action'] == 'payment.updated') {
+            $payment = GiftPayment::where('payment_id', '=', $data['data_id'])->first();
+            $payment->status = $paymentApi->status;
+            $payment->dt_updated = Helper::toMySQL('now', true);
+            $payment->save();
+        }
 
         $webhook = new WebhookPayment();
         $webhook->action        = $data['action'];
         $webhook->api_version   = $data['api_version'];
         $webhook->date_created  = Helper::toMySQL($data['date_created'], true);
         $webhook->user_id       = $data['user_id'];
-        $webhook->payment_id    = $data['id'];
+        $webhook->payment_id    = $data['data_id'];
         $webhook->json          = json_encode($data);
         $webhook->save();
 
