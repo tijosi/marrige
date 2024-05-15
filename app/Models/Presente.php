@@ -57,19 +57,18 @@ class Presente extends Model
 
             if ($payment->status == GiftPayment::APROVADO) return $presente;
 
-            if ($payment->status == GiftPayment::EM_PROGRESSO) {
+            if ($payment->status == GiftPayment::PENDENTE) {
                 $paymentApi = GiftPayment::buscarPagamento($payment->payment_id);
 
                 if (
-                    $paymentApi->status_detail == GiftPayment::PENDENTE_TRANSFERENCIA   ||
                     $paymentApi->status_detail == GiftPayment::PAGAMENTO_EM_PROCESSADO  ||
                     $paymentApi->status_detail == GiftPayment::EM_ANALISE
                 ) return $presente;
 
                 $dtNow = new DateTime();
-                $dtCreation = new DateTime($payment->dt_created);
+                $dtCreation = new DateTime($payment->dt_updated);
 
-                if ($dtNow->diff($dtCreation)->h >= 1) {
+                if ($dtNow->diff($dtCreation)->days >= 1) {
                     $cancelado = GiftPayment::cancelaPagamento($payment->payment_id);
 
                     if ($cancelado) {
