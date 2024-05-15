@@ -73,9 +73,12 @@ class Presente extends Model
                     $cancelado = GiftPayment::cancelaPagamento($payment->payment_id);
 
                     if ($cancelado) {
-                        $presente->payment_url = null;
-                        $presente->flg_disponivel = 1;
-                        $presente->tipo_selected = null;
+                        $presente->flg_disponivel       = 1;
+                        $presente->payment_url          = null;
+                        $presente->tipo_selected        = null;
+                        $presente->name_selected_id     = null;
+                        $presente->selected_at          = null;
+                        $presente->tipo_selected        = null;
                         $presente->save();
 
                         $payment->status = GiftPayment::CANCELADO;
