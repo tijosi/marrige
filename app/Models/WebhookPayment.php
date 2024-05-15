@@ -51,7 +51,6 @@ class WebhookPayment extends Model
         $paymentApi = GiftPayment::buscarPagamento($data['data_id']);
         if ($data['action'] == 'payment.created') {
             $payment = new GiftPayment();
-            $paymentApi->additional_info->payer->first_name = '1 - Edson';
             $payment->payment_id    = $data['data_id'];
             $payment->user_id       = trim(explode(' - ', $paymentApi->additional_info->payer->first_name)[0] ?? '');
             $payment->presente_id   = $paymentApi->additional_info->items[0]->id;

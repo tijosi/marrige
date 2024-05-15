@@ -28,6 +28,7 @@ class Presente extends Model
         'name_selected_id',
         'flg_disponivel',
         'selected_at',
+        'tipo_selected',
         'payment_url'
     ];
 
@@ -74,6 +75,7 @@ class Presente extends Model
                     if ($cancelado) {
                         $presente->payment_url = null;
                         $presente->flg_disponivel = 1;
+                        $presente->tipo_selected = null;
                         $presente->save();
 
                         $payment->status = GiftPayment::CANCELADO;
