@@ -134,7 +134,7 @@ class PresentesController extends Controller {
                 $presente->flg_disponivel       = 0;
                 $presente->name_selected_id     = Auth::user()->id;
                 $presente->selected_at          = Helper::toMySQL('now', true);
-                $presente->tipo_selected        = $request['tipo'] == 'Valor' ? Presente::VALOR : Presente::PRESENTE;
+                $presente->tipo_selected        = Presente::PRESENTE;
                 $presente->save();
                 break;
         }

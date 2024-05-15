@@ -63,6 +63,9 @@ class WebhookPayment extends Model
 
             $presente = Presente::where('id', '=', $payment->presente_id)->first();
             $presente->flg_disponivel = 0;
+            $presente->name_selected_id     = $payment->user_id;
+            $presente->selected_at          = Helper::toMySQL('now', true);
+            $presente->tipo_selected        = Presente::VALOR;
             $presente->save();
         } else if ($data['action'] == 'payment.updated') {
             $payment = GiftPayment::where('payment_id', '=', $data['data_id'])->first();
