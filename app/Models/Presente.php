@@ -69,7 +69,7 @@ class Presente extends Model
                 $dtNow = new DateTime();
                 $dtCreation = new DateTime($payment->dt_created);
 
-                if ($dtNow->diff($dtCreation) >= 1) {
+                if ($dtNow->diff($dtCreation)->h >= 1) {
                     $cancelado = GiftPayment::cancelaPagamento($payment->payment_id);
 
                     if ($cancelado) {
