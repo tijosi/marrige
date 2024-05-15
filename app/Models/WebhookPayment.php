@@ -62,7 +62,8 @@ class WebhookPayment extends Model
             $payment->save();
 
             $presente = Presente::where('id', '=', $payment->presente_id)->first();
-            $presente->flg_disponivel = 0;
+            $presente->flg_disponivel       = 0;
+            $presente->payment_url          = $paymentApi->point_of_interaction->transaction_data->ticket_url;
             $presente->name_selected_id     = $payment->user_id;
             $presente->selected_at          = Helper::toMySQL('now', true);
             $presente->tipo_selected        = Presente::VALOR;
