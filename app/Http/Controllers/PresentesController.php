@@ -104,12 +104,15 @@ class PresentesController extends Controller {
 
         $presente = Presente::verificaPresente(Presente::find($request['presenteId']));
 
-        if (!empty($presente->payment_url)) {
-            throw new Exception('Presente está em processo de Pagamento, Consulte seu Noivo :D');
-        }
-
         if (empty($presente)) {
             throw new Exception('Presente não encontrado');
+        }
+
+        if (!empty($presente->payment_url)) {
+            $payment = GiftPayment::where('url', '=', $presente->payment_url)->first();
+            if ($payment->status != GiftPayment::APROVADO) {
+                throw new Exception('Presente está em processo de Pagamento, Consulte seu Noivo :D');
+            }
         }
 
         Cloudinary::destroy('img/presentes/' . $presente->name_img);
