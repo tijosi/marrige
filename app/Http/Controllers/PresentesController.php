@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\helpers\Helper;
 use App\Models\GiftPayment;
 use App\Models\Presente;
-use App\Models\Presentes;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Exception;
 use Illuminate\Http\Request;
@@ -22,7 +21,11 @@ class PresentesController extends Controller {
 
         switch ($request->method()) {
             case 'GET':
-                return $this->listAll($request);
+                if (isset($request->id)) {
+                    return $this->getPresente($request->id);
+                } else {
+                    return $this->listAll($request);
+                }
                 break;
 
             case 'POST':
@@ -40,11 +43,22 @@ class PresentesController extends Controller {
 
     }
 
+    private function getPresente($id) {
+        $presente = Presente::where('id', '=', $id)->first();
+
+        if (empty($presente)) {
+            throw new Exception('Presente Não encontrado');
+        }
+        $presente = Presente::verificaPresente($presente);
+        $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
+
+        return $presente->toArray();
+    }
+
     private function listAll() {
         $presentes = Presente::all();
         foreach ($presentes as $presente) {
             $presente = Presente::verificaPresente($presente);
-            $presente->path = $presente->path_img;
             $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
         }
         return $presentes->toArray();
@@ -133,7 +147,7 @@ class PresentesController extends Controller {
                 $payment = GiftPayment::gerarPagamentoPresente($presente);
                 break;
 
-            case 'Presente':
+            case 'Produto':
                 $presente->flg_disponivel       = 0;
                 $presente->name_selected_id     = Auth::user()->id;
                 $presente->selected_at          = Helper::toMySQL('now', true);
