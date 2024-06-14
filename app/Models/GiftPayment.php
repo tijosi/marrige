@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\helpers\Helper;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use MercadoPago\Client\Preference\PreferenceClient;
+use MercadoPago\Exceptions\MPApiException;
 use MercadoPago\MercadoPagoConfig;
 
 class GiftPayment extends Model
@@ -84,7 +84,6 @@ class GiftPayment extends Model
     }
 
     public static function gerarPagamentoPresente(Presente $presente) {
-
         $presente = Presente::verificaPresente($presente);
 
         if (!empty($presente->payment_url)) {
@@ -93,27 +92,39 @@ class GiftPayment extends Model
 
         MercadoPagoConfig::setAccessToken(self::TOKEN);
 
-        $items[] = array(
+        $item = [
             "id" => $presente->id,
             "title" => $presente->nome,
             "description" => $presente->nome,
             "currency_id" => "BRL",
             "quantity" => 1,
-            "unit_price" => ($presente->valor_min + $presente->valor_max)/2
-        );
+            "unit_price" => ($presente->valor_min + $presente->valor_max) / 2
+        ];
 
-        $payer = array(
+        $payer = [
             "name" => Auth::user()->id . ' - ' . explode(' ', Auth::user()->name)[0],
             "surname" => explode(' ', Auth::user()->name)[1],
             "phone" => [
                 "area_code" => substr(Auth::user()->telefone, 0, 2),
                 "number" => substr(Auth::user()->telefone, 2)
             ],
-        );
+        ];
 
+        $request = self::createPreferenceRequest([$item], $payer, $presente);
+
+        try {
+            $client = new PreferenceClient();
+            $preference = $client->create($request);
+            return $preference->init_point;
+        } catch (MPApiException $error) {
+            return null;
+        }
+    }
+
+    public static function createPreferenceRequest($items, $payer, $presente) {
         $paymentMethods = [
             "excluded_payment_methods" => [],
-            "installments" => 6,
+            "installments" => 12,
             "default_installments" => 1
         ];
 
@@ -130,11 +141,10 @@ class GiftPayment extends Model
             "statement_descriptor" => "CASA_EDSONSWELEN",
             "external_reference" => $presente->id,
             "expires" => true,
+            "notification_url" => "https://marrige-back-a7da80137ead.herokuapp.com/api/webhook_payment",
             "auto_return" => 'approved',
         ];
 
-        $client = new PreferenceClient();
-        $preference = $client->create($request);
-        return $preference->init_point;
+        return $request;
     }
 }
