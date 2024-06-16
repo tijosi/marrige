@@ -3,11 +3,9 @@
 namespace App\Models;
 
 use App\helpers\Helper;
-use DateTime;
-use DateTimeZone;
+use App\Http\Api\MercadoPagoApiService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class WebhookPayment extends Model
 {
@@ -46,9 +44,17 @@ class WebhookPayment extends Model
 
     public static function salvarWebhook(Request $request) {
         $data = $request->input();
+        $api = new MercadoPagoApiService();
+        $paymentApi = $api->buscarPagamento($data['data_id']);
 
+        if (empty($paymentApi)) return;
 
-        $paymentApi = GiftPayment::buscarPagamento($data['data_id']);
+        $presente = Presente::where('id', '=', $paymentApi->additional_info->items[0]->id)->first();
+
+        if (empty($presente)) return;
+
+        if (($presente->valor_min + $presente->valor_max)/2 != $paymentApi->additional_info->items[0]->unit_price) return;
+
         if ($data['action'] == 'payment.created') {
             $payment = new GiftPayment();
             $payment->payment_id    = $data['data_id'];

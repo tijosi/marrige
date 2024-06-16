@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\helpers\Helper;
+use App\Http\Api\MercadoPagoApiService;
 use App\Models\GiftPayment;
 use App\Models\Presente;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
@@ -11,14 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 class PresentesController extends Controller {
 
-    const LEVEL = [
-        ['min_valor' => 751,    'descricao' => 'ALTO'],
-        ['min_valor' => 201,    'descricao' => 'MEDIO'],
-        ['min_valor' => 1,      'descricao' => 'BAIXO']
-    ];
-
     public function handle( Request $request ) {
-
         switch ($request->method()) {
             case 'GET':
                 if (isset($request->id)) {
@@ -37,7 +31,7 @@ class PresentesController extends Controller {
                 break;
 
             default:
-                throw new Exception('Método de Requisição não indentificado');
+                throw new Exception('Método da Requisição não está programado para ser procesado');
                 break;
         }
 
@@ -65,7 +59,6 @@ class PresentesController extends Controller {
     }
 
     private function save( Request $request ) {
-
         $data = $request->input();
         $image = $request->file('file');
 
@@ -76,17 +69,6 @@ class PresentesController extends Controller {
         $imageName = time() . '_' . str_replace(' ', '_', $request['nome_presente']) . '.' . $image->getClientOriginalExtension();
         $path = 'img/presentes/';
 
-        $data['vlr_minimo'] = $data['vlr_minimo'] ?? 0;
-        $data['vlr_maximo'] = $data['vlr_maximo'] ?? 0;
-        $media = ($data['vlr_minimo'] + $data['vlr_maximo'])/2;
-
-        foreach (self::LEVEL as $level) {
-            if ($media > $level['min_valor']) {
-                $level = $level['descricao'];
-                break;
-            }
-        }
-
         $uploadImg = Cloudinary::upload($request->file('file')->getRealPath(),[
             'folder' => $path,
             'public_id' => $imageName,
@@ -94,13 +76,14 @@ class PresentesController extends Controller {
 
         $record = new Presente();
         $record->nome               = $data['nome_presente'];
-        $record->valor_min          = $data['vlr_minimo'];
-        $record->valor_max          = $data['vlr_maximo'];
+        $record->valor_min          = $data['vlr_minimo'] ?? 0;
+        $record->valor_max          = $data['vlr_maximo'] ?? 0;
         $record->level              = $data['categoria'];
         $record->descricao          = $data['descricao'] ?? null;
         $record->name_img           = $imageName;
         $record->path_img           = $uploadImg;
         $record->img_url            = $data['link'] ?? null;
+        $record->tags               = $data['tags'] ?? null;
         $record->flg_disponivel     = 1;
         $record->save();
 
@@ -114,7 +97,7 @@ class PresentesController extends Controller {
         }
 
         if (empty($request['presenteId'])) {
-            throw new Exception('Por favor passsar o ID do presente');
+            throw new Exception('Por favor, passsar o ID do presente');
         }
 
         $presente = Presente::verificaPresente(Presente::find($request['presenteId']));
@@ -125,7 +108,7 @@ class PresentesController extends Controller {
 
         if (!empty($presente->payment_url)) {
             $payment = GiftPayment::where('url', '=', $presente->payment_url)->first();
-            if ($payment->status != GiftPayment::APROVADO) {
+            if ($payment->status != MercadoPagoApiService::APROVADO) {
                 throw new Exception('Presente está em processo de Pagamento, Consulte seu Noivo :D');
             }
         }
@@ -144,16 +127,20 @@ class PresentesController extends Controller {
         if ($presente->flg_disponivel != 1) throw new Exception('Presente já foi Selecionado');
 
         switch ($request['tipo']) {
-            case 'Valor':
+            case Presente::VALOR:
                 $payment = GiftPayment::gerarPagamentoPresente($presente);
+
+                return (object) ['link' => $payment];
                 break;
 
-            case 'Produto':
+            case Presente::PRODUTO:
                 $presente->flg_disponivel       = 0;
                 $presente->name_selected_id     = Auth::user()->id;
                 $presente->selected_at          = Helper::toMySQL('now', true);
-                $presente->tipo_selected        = Presente::PRESENTE;
+                $presente->tipo_selected        = Presente::PRODUTO;
                 $presente->save();
+
+                return $presente;
                 break;
         }
 
@@ -165,7 +152,5 @@ class PresentesController extends Controller {
         // $historico->save();
 
         // return $historico;
-
-        return $request['tipo'] == 'Valor' ? (object) [ 'link' => $payment] : $presente;
     }
 }

@@ -2,11 +2,9 @@
 
 namespace App\Models;
 
+use App\Http\Api\MercadoPagoApiService;
 use DateTime;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class Presente extends Model
 {
@@ -48,30 +46,31 @@ class Presente extends Model
      */
     protected $casts = [];
 
-    const PRESENTE = 'PRESENTE';
+    const PRODUTO = 'PRODUTO';
     const VALOR = 'VALOR';
 
     public static function verificaPresente(self $presente) {
         if ($presente->flg_disponivel == 0 && $presente->tipo_selected == self::VALOR) {
             $payment = GiftPayment::where('url', '=', $presente->payment_url)->first();
 
-            if ($payment->status == GiftPayment::APROVADO) return $presente;
+            if ($payment->status == MercadoPagoApiService::APROVADO) return $presente;
 
-            if ($payment->status == GiftPayment::PENDENTE) {
-                $paymentApi = GiftPayment::buscarPagamento($payment->payment_id);
+            if ($payment->status == MercadoPagoApiService::PENDENTE) {
+                $api = new MercadoPagoApiService();
+                $paymentApi = $api->buscarPagamento($payment->payment_id);
 
                 if (
-                    $paymentApi->status_detail == GiftPayment::PAGAMENTO_EM_PROCESSADO  ||
-                    $paymentApi->status_detail == GiftPayment::EM_ANALISE
+                    $paymentApi->status_detail == MercadoPagoApiService::PAGAMENTO_EM_PROCESSADO  ||
+                    $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE
                 ) return $presente;
 
                 $dtNow = new DateTime();
                 $dtCreation = new DateTime($payment->dt_updated);
 
                 if ($dtNow->diff($dtCreation)->days >= 1) {
-                    $cancelado = GiftPayment::cancelaPagamento($payment->payment_id);
+                    $pagamento = $api->cancelaPagamento($payment->payment_id);
 
-                    if ($cancelado) {
+                    if ($pagamento->status == MercadoPagoApiService::CANCELADO) {
                         $presente->flg_disponivel       = 1;
                         $presente->payment_url          = null;
                         $presente->tipo_selected        = null;
@@ -80,7 +79,7 @@ class Presente extends Model
                         $presente->tipo_selected        = null;
                         $presente->save();
 
-                        $payment->status = GiftPayment::CANCELADO;
+                        $payment->status = MercadoPagoApiService::CANCELADO;
                         $payment->save();
                     }
                 }
