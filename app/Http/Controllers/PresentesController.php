@@ -45,6 +45,7 @@ class PresentesController extends Controller {
         }
         $presente = Presente::verificaPresente($presente);
         $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
+        $presente->tags = json_decode($presente->tags);
 
         return $presente->toArray();
     }
