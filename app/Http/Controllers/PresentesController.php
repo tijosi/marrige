@@ -129,7 +129,8 @@ class PresentesController extends Controller {
 
         switch ($request['tipo']) {
             case Presente::VALOR:
-                $payment = GiftPayment::gerarPagamentoPresente($presente);
+                $api = new MercadoPagoApiService();
+                $payment = $api->gerarPagamentoPresente($presente);
 
                 return (object) ['link' => $payment];
                 break;
@@ -144,14 +145,5 @@ class PresentesController extends Controller {
                 return $presente;
                 break;
         }
-
-        // $historico = new Historico();
-        // $historico->title       = 'Presente Selecionado';
-        // $historico->user_name   = $user->name;
-        // $historico->body        = 'Confirmou o presente <b>' .  $request->nome . '</b>. Vamos Comemorar!';
-        // $historico->created_at  = Helper::toMySQL('now', true);
-        // $historico->save();
-
-        // return $historico;
     }
 }
