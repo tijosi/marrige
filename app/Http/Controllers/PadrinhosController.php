@@ -11,14 +11,23 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class PadrinhosController extends Controller {
 
     public function handle( Request $request ) {
         switch ($request->method()) {
             case 'GET':
-                return User::where('role_id', '=', '2')->get();
+                $padrinhos = User::where('role_id', '=', '2')->get();
+                foreach ($padrinhos as $padrinho) {
+                    if (empty($padrinho->imagem)) {
+                        $padrinho->imagem = null;
+                    } else {
+                        $padrinho->imagem = Cloudinary::getImage('img/padrinhos/' . $padrinho->imagem)->toUrl();
+
+                    }
+                }
+
+                return $padrinhos->toArray();
                 break;
 
             case 'POST':

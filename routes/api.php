@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\TEnum;
+use App\helpers\Helper;
 use App\Http\Controllers\PadrinhosController;
 use App\Http\Controllers\PresentesController;
 use App\Models\User;
@@ -33,8 +34,9 @@ Route::get('/', function() {
     ]);
 });
 
-Route::get('/enum/{enumClass}', [TEnum::class, 'getAllProperties']);
-Route::any('/webhook_payment', [WebhookPayment::class, 'salvarWebhook']);
+Route::get('/enum/{enumClass}',     [TEnum::class, 'getAllProperties']);
+Route::any('/webhook_payment',      [WebhookPayment::class, 'salvarWebhook']);
+
 Route::any('/login', function (Request $request) {
     $telefone = $request->telefone;
     $user = User::where('telefone', '=', $telefone)->first();
@@ -46,4 +48,21 @@ Route::any('/login', function (Request $request) {
     $token = $user->createToken('token-name')->plainTextToken;
 
     return response()->json(['token' => $token]);
+});
+
+Route::post('/create-user',         function(Request $request) {
+    $data = $request->input();
+
+    $data['id'] ? $user     = User::find($data['id']) : $user = new User();
+    $user->name             = $data['name'];
+    $user->telefone         = $data['telefone'];
+    $user->imagem           = time() . '_' . explode(' ', $data['name'])[0] . '_' . explode(' ', $data['name'])[1];
+    $user->role_id          = $data['role_id'];
+    if (empty($data['id'])) {
+        $user->created_at   = Helper::toMySQL('now', TRUE);
+    }
+    $user->updated_at       = Helper::toMySQL('now', TRUE);
+    $user->save();
+
+    return $user;
 });

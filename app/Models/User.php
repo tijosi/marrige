@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * @property string name
+ * @property string telefone
+ * @property string imagem
+ * @property string role_id
+ * @property string created_at
+ * @property string updated_at
+ */
+
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -19,8 +28,11 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'email',
-        'password',
+        'telefone',
+        'imagem',
+        'role_id',
+        'created_at',
+        'updated_at',
     ];
 
     /**

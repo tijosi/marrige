@@ -6,6 +6,7 @@ use App\helpers\Helper;
 use App\Http\Api\MercadoPagoApiService;
 use App\Models\GiftPayment;
 use App\Models\Presente;
+use App\Models\User;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Exception;
 use Illuminate\Http\Request;
