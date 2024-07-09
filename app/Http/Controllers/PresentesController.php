@@ -44,18 +44,15 @@ class PresentesController extends Controller {
         if (empty($presente)) {
             throw new Exception('Presente Não encontrado');
         }
-        $presente = Presente::verificaPresente($presente);
-        $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
-        $presente->tags = json_decode($presente->tags);
 
+        $presente->configuraParametros();
         return $presente->toArray();
     }
 
     private function listAll() {
         $presentes = Presente::all();
         foreach ($presentes as $presente) {
-            $presente = Presente::verificaPresente($presente);
-            $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
+            $presente->configuraParametros();
         }
         return $presentes->toArray();
     }
@@ -102,7 +99,8 @@ class PresentesController extends Controller {
             throw new Exception('Por favor, passsar o ID do presente');
         }
 
-        $presente = Presente::verificaPresente(Presente::find($request['presenteId']));
+        $presente = Presente::find($request['presenteId']);
+        $presente->verificaPresente();
 
         if (empty($presente)) {
             throw new Exception('Presente não encontrado');

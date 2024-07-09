@@ -51,7 +51,7 @@ class PadrinhosController extends Controller {
         if (empty($presente)) {
             throw new Exception('Presente Não encontrado');
         }
-        $presente = Presente::verificaPresente($presente);
+        $presente->verificaPresente();
         $presente->valor = ($presente->valor_min + $presente->valor_max)/2;
         $presente->tags = json_decode($presente->tags);
 
@@ -100,7 +100,8 @@ class PadrinhosController extends Controller {
             throw new Exception('Por favor, passsar o ID do presente');
         }
 
-        $presente = Presente::verificaPresente(Presente::find($request['presenteId']));
+        $presente = Presente::find($request['presenteId']);
+        $presente->verificaPresente();
 
         if (empty($presente)) {
             throw new Exception('Presente não encontrado');

@@ -41,7 +41,7 @@ class MercadoPagoApiService extends ApiService {
     }
 
     public function gerarPagamentoPresente(Presente $presente): null|string {
-        $presente = Presente::verificaPresente($presente);
+        $presente->verificaPresente();
 
         if (!empty($presente->payment_url)) {
             throw new Exception('Presente está em processo de Pagamento, Consulte o Noivo');

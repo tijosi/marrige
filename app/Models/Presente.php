@@ -11,6 +11,8 @@ class Presente extends Model
 
     protected $table = 'presentes';
 
+    const vlrMinParcelaCota = 1500;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -49,11 +51,11 @@ class Presente extends Model
     const PRODUTO = 'PRODUTO';
     const VALOR = 'VALOR';
 
-    public static function verificaPresente(self $presente) {
-        if ($presente->flg_disponivel == 0 && $presente->tipo_selected == self::VALOR) {
-            $payment = GiftPayment::where('url', '=', $presente->payment_url)->first();
+    public function verificaPresente() {
+        if ($this->flg_disponivel == 0 && $this->tipo_selected == self::VALOR) {
+            $payment = GiftPayment::where('url', '=', $this->payment_url)->first();
 
-            if ($payment->status == MercadoPagoApiService::APROVADO) return $presente;
+            if ($payment->status == MercadoPagoApiService::APROVADO) return;
 
             if ($payment->status == MercadoPagoApiService::PENDENTE) {
                 $api = new MercadoPagoApiService();
@@ -62,7 +64,7 @@ class Presente extends Model
                 if (
                     $paymentApi->status_detail == MercadoPagoApiService::PAGAMENTO_EM_PROCESSADO  ||
                     $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE
-                ) return $presente;
+                ) return;
 
                 $dtNow = new DateTime();
                 $dtCreation = new DateTime($payment->dt_updated);
@@ -71,13 +73,13 @@ class Presente extends Model
                     $pagamento = $api->cancelaPagamento($payment->payment_id);
 
                     if ($pagamento->status == MercadoPagoApiService::CANCELADO) {
-                        $presente->flg_disponivel       = 1;
-                        $presente->payment_url          = null;
-                        $presente->tipo_selected        = null;
-                        $presente->name_selected_id     = null;
-                        $presente->selected_at          = null;
-                        $presente->tipo_selected        = null;
-                        $presente->save();
+                        $this->flg_disponivel       = 1;
+                        $this->payment_url          = null;
+                        $this->tipo_selected        = null;
+                        $this->name_selected_id     = null;
+                        $this->selected_at          = null;
+                        $this->tipo_selected        = null;
+                        $this->save();
 
                         $payment->status = MercadoPagoApiService::CANCELADO;
                         $payment->save();
@@ -85,6 +87,20 @@ class Presente extends Model
                 }
             }
         }
-        return $presente;
+    }
+
+    public function configuraParametros() {
+        $this->verificaPresente();
+        $this->valor = round(($this->valor_min + $this->valor_max)/2, 2);
+        $this->tags = json_decode($this->tags);
+        $this->setCota();
+    }
+
+    public function setCota() {
+        $valor = ($this->valor_min + $this->valor_max)/2;
+        if($valor < self::vlrMinParcelaCota) return;
+
+        $this->cotas    = intdiv($valor, self::vlrMinParcelaCota);
+        $this->vlr_cota = round($valor / $this->cotas, 2);
     }
 }
