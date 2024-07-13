@@ -138,8 +138,8 @@ class PresentesController extends Controller {
             case Presente::COTA:
                 $api = new MercadoPagoApiService();
                 $presente->configuraParametros();
-                $presente->valor = $presente->vlr_cota * $request['qtd_cota'];
-                $payment = $api->gerarPagamentoPresente($presente);
+                $presente->valor = $presente->vlr_cota;
+                $payment = $api->gerarPagamentoPresente($presente, $request['qtd_cota']);
 
                 return (object) ['link' => $payment];
                 break;

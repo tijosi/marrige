@@ -40,7 +40,7 @@ class MercadoPagoApiService extends ApiService {
         return $response;
     }
 
-    public function gerarPagamentoPresente(Presente $presente): null|string {
+    public function gerarPagamentoPresente(Presente $presente, $quantidade = 1): null|string {
         $presente->verificaPresente();
 
         if ($presente->flg_disponivel == 0) {
@@ -58,7 +58,7 @@ class MercadoPagoApiService extends ApiService {
             "title" => $presente->nome,
             "description" => $presente->nome,
             "currency_id" => "BRL",
-            "quantity" => 1,
+            "quantity" => $quantidade,
             "unit_price" => $presente->valor
         ];
 

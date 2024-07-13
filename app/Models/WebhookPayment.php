@@ -51,12 +51,15 @@ class WebhookPayment extends Model
 
         $quantidade = $paymentApi->additional_info->items[0]->quantity;
         $presente = Presente::where('id', '=', $paymentApi->additional_info->items[0]->id)->first();
-        $presente->configuraParametros();
 
         if (empty($presente)) return;
 
-        if ($presente->tipo_selected == Presente::COTA) {
-            if ($presente->vlr_cota * $quantidade != $paymentApi->additional_info->items[0]->unit_price * $quantidade) return;
+        $presente->configuraParametros();
+
+        $valorPagamento = $paymentApi->additional_info->items[0]->unit_price * $quantidade;
+
+        if (abs($valorPagamento - $presente->valor) < 0.3) {
+            if ($presente->vlr_cota * $quantidade != $valorPagamento) return;
         } else {
             if (($presente->valor_min + $presente->valor_max)/2 != $paymentApi->additional_info->items[0]->unit_price) return;
         }
