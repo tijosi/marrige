@@ -124,11 +124,21 @@ class PresentesController extends Controller {
         }
 
         $presente = Presente::find($request['presenteId']);
-        if ($presente->flg_disponivel != 1) throw new Exception('Presente já foi Selecionado');
+        if ($presente->flg_disponivel == 0) throw new Exception('Presente já foi Selecionado');
 
         switch ($request['tipo']) {
             case Presente::VALOR:
                 $api = new MercadoPagoApiService();
+                $presente->configuraParametros();
+                $payment = $api->gerarPagamentoPresente($presente);
+
+                return (object) ['link' => $payment];
+                break;
+
+            case Presente::COTA:
+                $api = new MercadoPagoApiService();
+                $presente->configuraParametros();
+                $presente->valor = $presente->vlr_cota * $request['qtd_cota'];
                 $payment = $api->gerarPagamentoPresente($presente);
 
                 return (object) ['link' => $payment];
