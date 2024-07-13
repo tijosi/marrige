@@ -69,7 +69,7 @@ class WebhookPayment extends Model
             $payment->payment_id    = $data['data_id'];
             $payment->user_id       = trim(explode(' - ', $paymentApi->additional_info->payer->first_name)[0] ?? '');
             $payment->presente_id   = $paymentApi->additional_info->items[0]->id;
-            $payment->valor         = $paymentApi->additional_info->items[0]->unit_price * $quantidade;
+            $payment->valor         = $valorPagamento;
             $payment->status        = $paymentApi->status;
             $payment->url           = $paymentApi->point_of_interaction->transaction_data->ticket_url;
             $payment->dt_created    = Helper::toMySQL('now', true);
