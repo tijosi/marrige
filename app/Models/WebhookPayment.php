@@ -44,6 +44,15 @@ class WebhookPayment extends Model
 
     public static function salvarWebhook(Request $request) {
         $data = $request->input();
+        $webhook = new WebhookPayment();
+        $webhook->action        = $data['action'];
+        $webhook->api_version   = $data['api_version'];
+        $webhook->date_created  = Helper::toMySQL($data['date_created'], true);
+        $webhook->user_id       = $data['user_id'];
+        $webhook->payment_id    = $data['data_id'];
+        $webhook->json          = json_encode($data);
+        $webhook->save();
+
         $api = new MercadoPagoApiService();
         $paymentApi = $api->buscarPagamento($data['data_id']);
 
@@ -81,15 +90,6 @@ class WebhookPayment extends Model
             $payment->dt_updated = Helper::toMySQL('now', true);
             $payment->save();
         }
-
-        $webhook = new WebhookPayment();
-        $webhook->action        = $data['action'];
-        $webhook->api_version   = $data['api_version'];
-        $webhook->date_created  = Helper::toMySQL($data['date_created'], true);
-        $webhook->user_id       = $data['user_id'];
-        $webhook->payment_id    = $data['data_id'];
-        $webhook->json          = json_encode($data);
-        $webhook->save();
 
         return $webhook;
     }
