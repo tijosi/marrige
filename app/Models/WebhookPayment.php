@@ -67,7 +67,7 @@ class WebhookPayment extends Model
 
         $valorPagamento = $paymentApi->additional_info->items[0]->unit_price * $quantidade;
 
-        if (abs($valorPagamento - $presente->valor) < 0.3) {
+        if (abs($valorPagamento - $presente->valor) > 0.3) {
             if ($presente->vlr_cota * $quantidade != $valorPagamento) return;
         } else {
             if (($presente->valor_min + $presente->valor_max)/2 != $paymentApi->additional_info->items[0]->unit_price) return;
