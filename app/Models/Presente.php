@@ -11,7 +11,7 @@ class Presente extends Model
 
     protected $table = 'presentes';
 
-    const vlrMinParcelaCota = 1500;
+    const vlrMinParcelaCota = 100;
 
     /**
      * The attributes that are mass assignable.
@@ -102,13 +102,19 @@ class Presente extends Model
 
         $this->vlr_processando = $valorPendente;
         $this->vlr_presenteado = $valorPago;
+        $this->desconfiguraParametros();
         $this->save();
     }
 
+    private function desconfiguraParametros() {
+        if (isset($this->valor))                unset($this->valor);
+        if (isset($this->cotas))                unset($this->cotas);
+        if (isset($this->cotas_disponiveis))    unset($this->cotas_disponiveis);
+        if (isset($this->vlr_cota))             unset($this->vlr_cota);
+    }
+
     public function configuraParametros() {
-        $this->verificaPresente();
-        $this->valor = round(($this->valor_min + $this->valor_max)/2, 2);
-        $this->tags = json_decode($this->tags);
+        $this->valor = ($this->valor_min + $this->valor_max)/2;
         $this->setCota();
     }
 
@@ -119,7 +125,7 @@ class Presente extends Model
         $valorRetirar = $this->vlr_presenteado + $this->vlr_processando;
 
         $this->cotas                = intdiv($valor, self::vlrMinParcelaCota);
-        $this->cotas_disponiveis    = intdiv($valor - $valorRetirar, self::vlrMinParcelaCota);
-        $this->vlr_cota             = round($valor / $this->cotas, 2);
+        $this->cotas_disponiveis    = round(($valor - $valorRetirar)/self::vlrMinParcelaCota, 0);
+        $this->vlr_cota             = ($valor - $valorRetirar) / $this->cotas_disponiveis;
     }
 }

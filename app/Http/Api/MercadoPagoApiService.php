@@ -40,15 +40,11 @@ class MercadoPagoApiService extends ApiService {
         return $response;
     }
 
-    public function gerarPagamentoPresente(Presente $presente, $quantidade = 1): null|string {
+    public function gerarPagamentoPresente(Presente $presente, $valor, $quantidade = 1): null|string {
         $presente->verificaPresente();
 
         if ($presente->flg_disponivel == 0) {
             throw new Exception('Presente está indisponível, Consulte o Noivo');
-        }
-
-        if (empty($presente->valor)) {
-            $presente->configuraParametros();
         }
 
         MercadoPagoConfig::setAccessToken($this->token);
@@ -59,7 +55,7 @@ class MercadoPagoApiService extends ApiService {
             "description" => $presente->nome,
             "currency_id" => "BRL",
             "quantity" => $quantidade,
-            "unit_price" => $presente->valor
+            "unit_price" => $valor
         ];
 
         $payer = [

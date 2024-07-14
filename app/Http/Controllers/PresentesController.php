@@ -44,15 +44,19 @@ class PresentesController extends Controller {
         if (empty($presente)) {
             throw new Exception('Presente Não encontrado');
         }
-
+        $presente->verificaPresente();
         $presente->configuraParametros();
+        $presente->tags = json_decode($presente->tags);
+
         return $presente->toArray();
     }
 
     private function listAll() {
         $presentes = Presente::all();
         foreach ($presentes as $presente) {
+            $presente->verificaPresente();
             $presente->configuraParametros();
+            $presente->tags = json_decode($presente->tags);
         }
         return $presentes->toArray();
     }
@@ -129,8 +133,8 @@ class PresentesController extends Controller {
         switch ($request['tipo']) {
             case Presente::VALOR:
                 $api = new MercadoPagoApiService();
-                $presente->configuraParametros();
-                $payment = $api->gerarPagamentoPresente($presente);
+                $valor = round(($presente->valor_min + $presente->valor_max)/2, 2);
+                $payment = $api->gerarPagamentoPresente($presente, $valor);
 
                 return (object) ['link' => $payment];
                 break;
@@ -138,8 +142,7 @@ class PresentesController extends Controller {
             case Presente::COTA:
                 $api = new MercadoPagoApiService();
                 $presente->configuraParametros();
-                $presente->valor = $presente->vlr_cota;
-                $payment = $api->gerarPagamentoPresente($presente, $request['qtd_cota']);
+                $payment = $api->gerarPagamentoPresente($presente, $presente->vlr_cota, $request['qtd_cota']);
 
                 return (object) ['link' => $payment];
                 break;
@@ -148,7 +151,6 @@ class PresentesController extends Controller {
                 $presente->flg_disponivel       = 0;
                 $presente->name_selected_id     = Auth::user()->id;
                 $presente->selected_at          = Helper::toMySQL('now', true);
-                $presente->tipo_selected        = Presente::PRODUTO;
                 $presente->save();
 
                 return $presente;
