@@ -45,12 +45,12 @@ class WebhookPayment extends Model
     public static function salvarWebhook(Request $request) {
         $data = $request->input();
         $webhook = new WebhookPayment();
-        $webhook->action        = $data['action'];
-        $webhook->api_version   = $data['api_version'];
-        $webhook->date_created  = Helper::toMySQL($data['date_created'], true);
-        $webhook->user_id       = $data['user_id'];
-        $webhook->payment_id    = $data['data_id'];
-        $webhook->json          = json_encode($data);
+        // $webhook->action        = $data['action'];
+        // $webhook->api_version   = $data['api_version'];
+        // $webhook->date_created  = Helper::toMySQL($data['date_created'], true);
+        // $webhook->user_id       = $data['user_id'];
+        // $webhook->payment_id    = $data['data_id'];
+        // $webhook->json          = json_encode($data);
         $webhook->save();
 
         $api = new MercadoPagoApiService();
@@ -68,7 +68,7 @@ class WebhookPayment extends Model
         $valorPagamento = $paymentApi->additional_info->items[0]->unit_price * $quantidade;
 
         if (abs($valorPagamento - $presente->valor) > 0.3) {
-            if ($presente->vlr_cota * $quantidade != $valorPagamento) return;
+            if (round($presente->vlr_cota,2) * $quantidade != $valorPagamento) return;
         } else {
             if (($presente->valor_min + $presente->valor_max)/2 != $paymentApi->additional_info->items[0]->unit_price) return;
         }
