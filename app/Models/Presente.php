@@ -57,38 +57,38 @@ class Presente extends Model
     public function verificaPresente() {
         $payments = GiftPayment::where('presente_id', '=', $this->id)->get();
 
-        if (!$payments->isNotEmpty()) return;
-
-        $api            = new MercadoPagoApiService();
         $valorPago      = null;
         $valorPendente  = null;
-        foreach ($payments as $payment) {
-            $paymentApi = $api->buscarPagamento($payment->payment_id);
-            $quantidade = $paymentApi->additional_info->items[0]->quantity;
+        if ($payments->isNotEmpty()) {
+            $api            = new MercadoPagoApiService();
+            foreach ($payments as $payment) {
+                $paymentApi = $api->buscarPagamento($payment->payment_id);
+                $quantidade = $paymentApi->additional_info->items[0]->quantity;
 
-            if ($payment->status == MercadoPagoApiService::APROVADO) {
-                $valorPago += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
-                continue;
-            }
-
-            if ($payment->status == MercadoPagoApiService::PENDENTE) {
-                if (
-                    $paymentApi->status_detail == MercadoPagoApiService::PAGAMENTO_EM_PROCESSADO  ||
-                    $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE               ||
-                    $paymentApi->status_detail == MercadoPagoApiService::PENDENTE_TRANSFERENCIA
-                ) {
-                    $valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
+                if ($payment->status == MercadoPagoApiService::APROVADO) {
+                    $valorPago += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
                     continue;
-                };
+                }
 
-                $dtNow = new DateTime();
-                $dtCreation = new DateTime($payment->dt_updated);
+                if ($payment->status == MercadoPagoApiService::PENDENTE) {
+                    if (
+                        $paymentApi->status_detail == MercadoPagoApiService::PAGAMENTO_EM_PROCESSADO  ||
+                        $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE               ||
+                        $paymentApi->status_detail == MercadoPagoApiService::PENDENTE_TRANSFERENCIA
+                    ) {
+                        $valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
+                        continue;
+                    };
 
-                if ($dtNow->diff($dtCreation)->days >= 1) {
-                    $pagamento = $api->cancelaPagamento($payment->payment_id);
+                    $dtNow = new DateTime();
+                    $dtCreation = new DateTime($payment->dt_updated);
 
-                    $payment->status = MercadoPagoApiService::CANCELADO;
-                    $payment->save();
+                    if ($dtNow->diff($dtCreation)->days >= 1) {
+                        $pagamento = $api->cancelaPagamento($payment->payment_id);
+
+                        $payment->status = MercadoPagoApiService::CANCELADO;
+                        $payment->save();
+                    }
                 }
             }
         }
