@@ -54,8 +54,8 @@ class MercadoPagoApiService extends ApiService {
             "title" => $presente->nome,
             "description" => $presente->nome,
             "currency_id" => "BRL",
-            "quantity" => $quantidade,
-            "unit_price" => $valor
+            "quantity" => (int) $quantidade,
+            "unit_price" => (float) $valor
         ];
 
         $payer = [

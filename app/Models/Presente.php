@@ -20,8 +20,7 @@ class Presente extends Model
      */
     protected $fillable = [
         'nome',
-        'valor_min',
-        'valor_max',
+        'valor',
         'level',
         'name_img',
         'img_url',
@@ -62,6 +61,8 @@ class Presente extends Model
         if ($payments->isNotEmpty()) {
             $api            = new MercadoPagoApiService();
             foreach ($payments as $payment) {
+                if ($payment->status == MercadoPagoApiService::CANCELADO) continue;
+
                 $paymentApi = $api->buscarPagamento($payment->payment_id);
                 $quantidade = $paymentApi->additional_info->items[0]->quantity;
 
@@ -73,8 +74,7 @@ class Presente extends Model
                 if ($payment->status == MercadoPagoApiService::PENDENTE) {
                     if (
                         $paymentApi->status_detail == MercadoPagoApiService::PAGAMENTO_EM_PROCESSADO  ||
-                        $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE               ||
-                        $paymentApi->status_detail == MercadoPagoApiService::PENDENTE_TRANSFERENCIA
+                        $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE
                     ) {
                         $valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
                         continue;
@@ -82,18 +82,19 @@ class Presente extends Model
 
                     $dtNow = new DateTime();
                     $dtCreation = new DateTime($payment->dt_updated);
-
-                    if ($dtNow->diff($dtCreation)->days >= 1) {
-                        $pagamento = $api->cancelaPagamento($payment->payment_id);
-
+                    $horas = $dtNow->diff($dtCreation)->h + ($dtNow->diff($dtCreation)->days * 24);
+                    if ($horas >= 1) {
+                        $api->cancelaPagamento($payment->payment_id);
                         $payment->status = MercadoPagoApiService::CANCELADO;
                         $payment->save();
+                    } else {
+                        $valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
                     }
                 }
             }
         }
 
-        $valorDisponivel = abs(($valorPago + $valorPendente) - ($this->valor_min + $this->valor_max)/2);
+        $valorDisponivel = abs(($valorPago + $valorPendente) - $this->valor);
         if ($valorDisponivel < 0.3) {
             $this->flg_disponivel = 0;
         } else {
@@ -102,30 +103,22 @@ class Presente extends Model
 
         $this->vlr_processando = $valorPendente;
         $this->vlr_presenteado = $valorPago;
-        $this->desconfiguraParametros();
+        $this->unsetCota();
         $this->save();
     }
 
-    private function desconfiguraParametros() {
-        if (isset($this->valor))                unset($this->valor);
+    private function unsetCota() {
         if (isset($this->cotas))                unset($this->cotas);
         if (isset($this->cotas_disponiveis))    unset($this->cotas_disponiveis);
         if (isset($this->vlr_cota))             unset($this->vlr_cota);
     }
 
-    public function configuraParametros() {
-        $this->valor = ($this->valor_min + $this->valor_max)/2;
-        $this->setCota();
-    }
-
     public function setCota() {
-        $valor = ($this->valor_min + $this->valor_max)/2;
-        if($valor < self::vlrMinParcelaCota) return;
+        if($this->valor < self::vlrMinParcelaCota * 2) return;
 
-        $valorRetirar = $this->vlr_presenteado + $this->vlr_processando;
-
-        $this->cotas                = intdiv($valor, self::vlrMinParcelaCota);
-        $this->cotas_disponiveis    = round(($valor - $valorRetirar)/self::vlrMinParcelaCota, 0);
-        $this->vlr_cota             = ($valor - $valorRetirar) / $this->cotas_disponiveis;
+        $valorPendente              = $this->valor - $this->vlr_presenteado - $this->vlr_processando;
+        $this->cotas                = intdiv($this->valor, self::vlrMinParcelaCota);
+        $this->cotas_disponiveis    = round($valorPendente / self::vlrMinParcelaCota);
+        $this->vlr_cota             = $valorPendente / $this->cotas_disponiveis;
     }
 }

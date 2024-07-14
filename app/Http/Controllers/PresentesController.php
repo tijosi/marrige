@@ -45,7 +45,7 @@ class PresentesController extends Controller {
             throw new Exception('Presente Não encontrado');
         }
         $presente->verificaPresente();
-        $presente->configuraParametros();
+        $presente->setCota();
         $presente->tags = json_decode($presente->tags);
 
         return $presente->toArray();
@@ -55,7 +55,7 @@ class PresentesController extends Controller {
         $presentes = Presente::all();
         foreach ($presentes as $presente) {
             $presente->verificaPresente();
-            $presente->configuraParametros();
+            $presente->setCota();
             $presente->tags = json_decode($presente->tags);
         }
         return $presentes->toArray();
@@ -79,8 +79,7 @@ class PresentesController extends Controller {
 
         $record = new Presente();
         $record->nome               = $data['nome_presente'];
-        $record->valor_min          = $data['vlr_minimo'] ?? 0;
-        $record->valor_max          = $data['vlr_maximo'] ?? 0;
+        $record->valor              = $data['valor'] ?? 0;
         $record->level              = $data['categoria'];
         $record->descricao          = $data['descricao'] ?? null;
         $record->name_img           = $imageName;
@@ -133,15 +132,14 @@ class PresentesController extends Controller {
         switch ($request['tipo']) {
             case Presente::VALOR:
                 $api = new MercadoPagoApiService();
-                $valor = round(($presente->valor_min + $presente->valor_max)/2, 2);
-                $payment = $api->gerarPagamentoPresente($presente, $valor);
+                $payment = $api->gerarPagamentoPresente($presente, $presente->valor);
 
                 return (object) ['link' => $payment];
                 break;
 
             case Presente::COTA:
                 $api = new MercadoPagoApiService();
-                $presente->configuraParametros();
+                $presente->setCota();
                 $payment = $api->gerarPagamentoPresente($presente, $presente->vlr_cota, $request['qtd_cota']);
 
                 return (object) ['link' => $payment];
