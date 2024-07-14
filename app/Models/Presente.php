@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Http\Api\MercadoPagoApiService;
 use DateTime;
+use DateTimeZone;
 use Illuminate\Database\Eloquent\Model;
 
 class Presente extends Model
@@ -80,10 +81,10 @@ class Presente extends Model
                         continue;
                     };
 
-                    $dtNow = new DateTime();
-                    $dtCreation = new DateTime($payment->dt_updated);
-                    $horas = $dtNow->diff($dtCreation)->h + ($dtNow->diff($dtCreation)->days * 24);
-                    if ($horas > 1) {
+                    $dtNow      = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+                    $dtCreation = new DateTime($payment->dt_updated, new DateTimeZone('America/Sao_Paulo'));
+                    $horas      = $dtCreation->diff($dtNow)->h;
+                    if ($horas >= 1) {
                         $api->cancelaPagamento($payment->payment_id);
                         $payment->status = MercadoPagoApiService::CANCELADO;
                         $payment->save();
