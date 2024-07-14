@@ -11,7 +11,7 @@ class Presente extends Model
 
     protected $table = 'presentes';
 
-    const vlrMinParcelaCota = 100;
+    const vlrMinParcelaCota = 1800;
 
     /**
      * The attributes that are mass assignable.
