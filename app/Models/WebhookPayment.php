@@ -61,24 +61,14 @@ class WebhookPayment extends Model
         $quantidade = $paymentApi->additional_info->items[0]->quantity;
         $presente = Presente::where('id', '=', $paymentApi->additional_info->items[0]->id)->first();
 
-        if (empty($presente)) return;
-
-        $presente->configuraParametros();
-
-        $valorPagamento = $paymentApi->additional_info->items[0]->unit_price * $quantidade;
-
-        if (abs($valorPagamento - $presente->valor) > 0.3) {
-            if (round($presente->vlr_cota,2) * $quantidade != $valorPagamento) return;
-        } else {
-            if (($presente->valor_min + $presente->valor_max)/2 != $paymentApi->additional_info->items[0]->unit_price) return;
-        }
+        if (empty($presente) || $presente->nome != $paymentApi->additional_info->items[0]->title) return;
 
         if ($data['action'] == 'payment.created') {
             $payment = new GiftPayment();
             $payment->payment_id    = $data['data_id'];
             $payment->user_id       = trim(explode(' - ', $paymentApi->additional_info->payer->first_name)[0] ?? '');
             $payment->presente_id   = $paymentApi->additional_info->items[0]->id;
-            $payment->valor         = $valorPagamento;
+            $payment->valor         = $paymentApi->additional_info->items[0]->unit_price * $quantidade;
             $payment->status        = $paymentApi->status;
             $payment->url           = $paymentApi->point_of_interaction->transaction_data->ticket_url;
             $payment->dt_created    = Helper::toMySQL('now', true);
