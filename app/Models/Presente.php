@@ -83,7 +83,7 @@ class Presente extends Model
                     $dtNow = new DateTime();
                     $dtCreation = new DateTime($payment->dt_updated);
                     $horas = $dtNow->diff($dtCreation)->h + ($dtNow->diff($dtCreation)->days * 24);
-                    if ($horas >= 1) {
+                    if ($horas > 1) {
                         $api->cancelaPagamento($payment->payment_id);
                         $payment->status = MercadoPagoApiService::CANCELADO;
                         $payment->save();
