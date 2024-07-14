@@ -16,13 +16,15 @@ class ApiService {
     protected $url;
 
     /** @var array */
-    private $headers;
+    private $headers = [
+        'Content-Type' => 'application/json'
+    ];
 
     public function __construct() {}
 
     // CONFIGURAÇÃO E VALIDAÇÃO:
     private function isAuthenticate(): bool {
-        if (empty($this->token) || $this->headers['Authorization']) {
+        if (empty($this->token) || !isset($this->headers['Authorization'])) {
             return FALSE;
         }
 
@@ -32,7 +34,7 @@ class ApiService {
     protected function auth() {}
 
     protected function setHeaderGlobal(string $nome, string $valor): void {
-        $this->headers[] = [$nome => $valor];
+        $this->headers[$nome] = $valor;
     }
 
     protected function setAuthorization() {
@@ -49,31 +51,32 @@ class ApiService {
 
 
     // REQUISIÇÕES:
-    protected function get(string $url, array $body = null, array $header = []): mixed {
+    protected function get(string $url, array $body = null): mixed {
         if (!$this->isAuthenticate()) $this->auth();
 
-        $response = Http::withHeaders(array_merge($this->headers, $header))->get($url, $body);
+        $http = Http::withHeaders($this->headers);
+        $response = $http->get($this->url . $url, $body);
         return $this->validateRequest($response);
     }
 
     protected function post(string $url, array $body = [], array $header = []): mixed {
         if (!$this->isAuthenticate()) $this->auth();
 
-        $response = Http::withHeaders(array_merge($this->headers, $header))->post($url, $body);
+        $response = Http::withHeaders(array_merge($this->headers, $header))->post($this->url . $url, $body);
         return $this->validateRequest($response);
     }
 
     protected function put(string $url, array $body = [], array $header = []): mixed {
         if (!$this->isAuthenticate()) $this->auth();
 
-        $response = Http::withHeaders(array_merge($this->headers, $header))->put($url, $body);
+        $response = Http::withHeaders(array_merge($this->headers, $header))->put($this->url . $url, $body);
         return $this->validateRequest($response);
     }
 
     protected function delete(string $url, array $body = [], array $header = []): mixed {
         if (!$this->isAuthenticate()) $this->auth();
 
-        $response = Http::withHeaders(array_merge($this->headers, $header))->delete($url, $body);
+        $response = Http::withHeaders(array_merge($this->headers, $header))->delete($this->url . $url, $body);
         return $this->validateRequest($response);
     }
 

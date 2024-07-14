@@ -57,7 +57,7 @@ class Presente extends Model
     public function verificaPresente() {
         $payments = GiftPayment::where('presente_id', '=', $this->id)->get();
 
-        if (empty($payments->items)) return;
+        if (!$payments->isNotEmpty()) return;
 
         $api            = new MercadoPagoApiService();
         $valorPago      = null;
@@ -74,7 +74,8 @@ class Presente extends Model
             if ($payment->status == MercadoPagoApiService::PENDENTE) {
                 if (
                     $paymentApi->status_detail == MercadoPagoApiService::PAGAMENTO_EM_PROCESSADO  ||
-                    $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE
+                    $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE               ||
+                    $paymentApi->status_detail == MercadoPagoApiService::PENDENTE_TRANSFERENCIA
                 ) {
                     $valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
                     continue;
