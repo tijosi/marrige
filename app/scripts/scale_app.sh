@@ -2,7 +2,7 @@
 
 # Variáveis
 APP_NAME="marrige-back"
-HEROKU_API_KEY="HRKU-0ebc5eb7-5b9c-4a65-b4b8-0b0e70efe112"
+HEROKU_API_KEY="$HEROKU_API_KEY"
 
 # Verifique o argumento de entrada
 if [ "$1" == "start" ]; then
@@ -10,6 +10,7 @@ if [ "$1" == "start" ]; then
     curl -n -X PATCH https://api.heroku.com/apps/$APP_NAME/formation \
     -H "Authorization: Bearer $HEROKU_API_KEY" \
     -H "Accept: application/vnd.heroku+json; version=3" \
+    -H "Content-Type: application/json" \
     -d '{
       "updates": [
         {
@@ -23,6 +24,7 @@ elif [ "$1" == "stop" ]; then
     curl -n -X PATCH https://api.heroku.com/apps/$APP_NAME/formation \
     -H "Authorization: Bearer $HEROKU_API_KEY" \
     -H "Accept: application/vnd.heroku+json; version=3" \
+    -H "Content-Type: application/json" \
     -d '{
       "updates": [
         {
