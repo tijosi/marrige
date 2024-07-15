@@ -2,7 +2,7 @@
 
 # Variáveis
 APP_NAME="marrige-back"
-HEROKU_API_KEY="$HEROKU_API_KEY"
+HEROKU_API_KEY="HRKU-0ebc5eb7-5b9c-4a65-b4b8-0b0e70efe112"
 
 # Verifique o argumento de entrada
 if [ "$1" == "start" ]; then
