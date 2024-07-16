@@ -26,7 +26,7 @@ class LogUserActivity
             ]);
         }
 
-        CheckUserActivityJob::dispatch()->delay(now('America/Sao_Paulo')->addMinute(6));
+        CheckUserActivityJob::dispatch()->delay(now('America/Sao_Paulo')->addMinutes(1));
 
         return $next($request);
     }

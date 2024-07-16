@@ -21,7 +21,7 @@ class CheckUserActivityJob implements ShouldQueue
 
     public function handle(): void
     {
-        $hasActivity = DB::table('access_log')->where( 'dt_access', '>=', now('America/Sao_Paulo')->subMinutes(5) )->exists();
+        $hasActivity = DB::table('access_log')->where( 'dt_access', '>=', now('America/Sao_Paulo')->subSeconds(50) )->exists();
         if (!$hasActivity) return;
 
         $this->scaleDownDynos();
