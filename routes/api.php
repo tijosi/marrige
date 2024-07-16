@@ -11,8 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/autenticacao', function(Request $request) {
-        $user = $request->user();
-        return $user;
+        return $request->user();
     });
 
     Route::get('/admin', function(Request $request) {
