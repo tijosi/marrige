@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use App\helpers\Helper;
-use App\Jobs\CheckUserActivityJob;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,8 +24,6 @@ class LogUserActivity
                 'dt_access' => Helper::toMySQL('now', true)
             ]);
         }
-
-        CheckUserActivityJob::dispatch()->delay(now('America/Sao_Paulo')->addMinutes(1));
 
         return $next($request);
     }
