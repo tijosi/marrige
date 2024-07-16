@@ -23,6 +23,7 @@ class CheckUserActivityJob implements ShouldQueue
         if ($hasActivity) return;
 
         $this->scaleDownDynos();
+        $this->clearTable();
     }
 
     private function scaleDownDynos() {
@@ -35,5 +36,9 @@ class CheckUserActivityJob implements ShouldQueue
             "https://api.heroku.com/apps/{$herokuApp}/formation/web",
             ['quantity' => 0]
         );
+    }
+
+    private function clearTable() {
+        return DB::table('access_log')->truncate();
     }
 }
