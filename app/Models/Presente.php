@@ -7,6 +7,22 @@ use DateTime;
 use DateTimeZone;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * App\Models\Presente
+ *
+ * @property string $nome
+ * @property string $valor
+ * @property string $level
+ * @property string $name_img
+ * @property string $img_url
+ * @property string $flg_disponivel
+ * @property string $payment_url
+ * @property string $vlr_presenteado
+ * @property string $vlr_processando
+ * @property string $selected_by_user_id
+ * @property string $selected_at
+ */
+
 class Presente extends Model
 {
 
@@ -14,51 +30,42 @@ class Presente extends Model
 
     const vlrMinParcelaCota = 1800;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'nome',
-        'valor',
-        'level',
-        'name_img',
-        'img_url',
-        'name_selected_id',
-        'flg_disponivel',
-        'selected_at',
-        'tipo_selected',
-        'payment_url',
-        'vlr_presenteado',
-        'vlr_processando'
-    ];
-
     public $timestamps = false;
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [];
 
-    const PRODUTO = 'PRODUTO';
-    const VALOR = 'VALOR';
-    const COTA = 'COTA';
+    const PRODUTO   = 'PRODUTO';
+    const VALOR     = 'VALOR';
+    const COTA      = 'COTA';
 
     public function verificaPresente() {
+        $valores = $this->verificaPagamentos();
+        $valores->valorPago += $this->verificaPagamentosManuais();
+
+        $valorDisponivel = abs(($valores->valorPago + $valores->valorPendente) - $this->valor);
+        if ($valorDisponivel < 0.3) {
+            $this->flg_disponivel = 0;
+        } else {
+            $this->flg_disponivel = 1;
+        }
+
+        $this->vlr_processando = $valores->valorPendente;
+        $this->vlr_presenteado = $valores->valorPago;
+        $this->unsetCota();
+        $this->save();
+    }
+
+    /**  @return object {valorPago: float, valorPendente: float} */
+    private function verificaPagamentos(): object {
         $payments = GiftPayment::where('presente_id', '=', $this->id)->get();
 
-        $valorPago      = null;
-        $valorPendente  = null;
+        $valores = (object) [
+            'valorPago' => 0,
+            'valorPendente' => 0
+        ];
+
         if ($payments->isNotEmpty()) {
             $api            = new MercadoPagoApiService();
             foreach ($payments as $payment) {
@@ -68,7 +75,7 @@ class Presente extends Model
                 $quantidade = $paymentApi->additional_info->items[0]->quantity;
 
                 if ($payment->status == MercadoPagoApiService::APROVADO) {
-                    $valorPago += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
+                    $valores->valorPago += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
                     continue;
                 }
 
@@ -77,7 +84,7 @@ class Presente extends Model
                         $paymentApi->status_detail == MercadoPagoApiService::PAGAMENTO_EM_PROCESSADO  ||
                         $paymentApi->status_detail == MercadoPagoApiService::EM_ANALISE
                     ) {
-                        $valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
+                        $valores->valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
                         continue;
                     };
 
@@ -89,23 +96,25 @@ class Presente extends Model
                         $payment->status = MercadoPagoApiService::CANCELADO;
                         $payment->save();
                     } else {
-                        $valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
+                        $valores->valorPendente += $paymentApi->additional_info->items[0]->unit_price * $quantidade;
                     }
                 }
             }
         }
 
-        $valorDisponivel = abs(($valorPago + $valorPendente) - $this->valor);
-        if ($valorDisponivel < 0.3) {
-            $this->flg_disponivel = 0;
-        } else {
-            $this->flg_disponivel = 1;
+        return $valores;
+    }
+
+    private function verificaPagamentosManuais(): float {
+        /** @var PaymentManual[] */
+        $paymentsManuais = PaymentManual::where('presente_id', '=', $this->id)->get();
+
+        $valorPago = 0;
+        foreach ($paymentsManuais as $payment) {
+            $valorPago += $payment->valor;
         }
 
-        $this->vlr_processando = $valorPendente;
-        $this->vlr_presenteado = $valorPago;
-        $this->unsetCota();
-        $this->save();
+        return $valorPago;
     }
 
     private function unsetCota() {

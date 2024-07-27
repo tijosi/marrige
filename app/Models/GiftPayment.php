@@ -4,41 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class GiftPayment extends Model
-{
+/**
+ * App\Models\GiftPayment
+ *
+ * @property string $payment_id
+ * @property string $user_id
+ * @property string $presente_id
+ * @property string $valor
+ * @property string $status
+ * @property string $url
+ * @property string $dt_created
+ * @property string $dt_updated
+ */
+
+class GiftPayment extends Model {
 
     protected $table = 'gift_payment';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
-    protected $fillable = [
-        'payment_id',
-        'user_id',
-        'presente_id',
-        'valor',
-        'status',
-        'url',
-        'dt_created',
-        'dt_updated',
-    ];
-
     public $timestamps = false;
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [];
-
 }

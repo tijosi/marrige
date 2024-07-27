@@ -7,6 +7,7 @@ use App\Http\Controllers\PresentesController;
 use App\Models\User;
 use App\Models\WebhookPayment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->group(function () {
@@ -14,13 +15,22 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
 
+    Route::get('/database/usuarios', function(Request $request) {
+        if (Auth::user()->id != 1) {
+            throw new Exception('Permissão Negada');
+        }
+
+        return User::all()->toArray();
+    });
+
     Route::get('/admin', function(Request $request) {
         $user = $request->user();
         return $user->role_id == 1;
     });
 
-    Route::any('/presentes', [PresentesController::class, 'handle']);
-    Route::post('/presentes/confirmar', [PresentesController::class, 'confirmar']);
+    Route::any('/presentes',                                [PresentesController::class, 'handle']);
+    Route::post('/presentes/confirmar',                     [PresentesController::class, 'confirmar']);
+    Route::post('/presentes/adicionar-pagamento-manual',    [PresentesController::class, 'confirmarPagamentoManual']);
 
 
     Route::any('/padrinhos', [PadrinhosController::class, 'handle']);

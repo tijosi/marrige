@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\helpers\Helper;
 use App\Http\Api\MercadoPagoApiService;
 use App\Models\GiftPayment;
+use App\Models\PaymentManual;
 use App\Models\Presente;
 use App\Models\User;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
@@ -147,12 +148,27 @@ class PresentesController extends Controller {
 
             case Presente::PRODUTO:
                 $presente->flg_disponivel       = 0;
-                $presente->name_selected_id     = Auth::user()->id;
+                $presente->selected_by_user_id  = Auth::user()->id;
                 $presente->selected_at          = Helper::toMySQL('now', true);
                 $presente->save();
 
                 return $presente;
                 break;
         }
+    }
+
+    public function confirmarPagamentoManual(Request $request) {
+        if (Auth::user()->id != 1) {
+            throw new Exception('Permissão Negada');
+        }
+
+        $paymentManual = new PaymentManual();
+        $paymentManual->user_id     = $request['pagante'];
+        $paymentManual->valor       = $request['valor'];
+        $paymentManual->presente_id = $request['presente_id'];
+        $paymentManual->status      = 'PAGO';
+        $paymentManual->save();
+
+        return $paymentManual;
     }
 }
