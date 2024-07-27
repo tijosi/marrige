@@ -157,7 +157,7 @@ class PresentesController extends Controller {
     }
 
     public function confirmarPagamentoManual(Request $request) {
-        if (Auth::user()->id != 1) {
+        if (Auth::user()->role_id != 1) {
             throw new Exception('Permissão Negada');
         }
 

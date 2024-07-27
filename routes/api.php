@@ -16,7 +16,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::get('/database/usuarios', function(Request $request) {
-        if (Auth::user()->id != 1) {
+        if (Auth::user()->role_id != 1) {
             throw new Exception('Permissão Negada');
         }
 
