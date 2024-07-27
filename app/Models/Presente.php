@@ -127,7 +127,7 @@ class Presente extends Model
         if($this->valor < self::vlrMinParcelaCota * 2 || abs($this->valor - $this->vlr_presenteado - $this->vlr_processando) < 0.3) return;
 
         $valorPendente              = $this->valor - $this->vlr_presenteado - $this->vlr_processando;
-        $this->cotas                = intdiv($this->valor, self::vlrMinParcelaCota);
+        $this->cotas                = round($this->valor / self::vlrMinParcelaCota);
         $this->cotas_disponiveis    = round($valorPendente / self::vlrMinParcelaCota);
         $this->vlr_cota             = $valorPendente / $this->cotas_disponiveis;
     }
