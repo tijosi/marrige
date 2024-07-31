@@ -170,4 +170,27 @@ class PresentesController extends Controller {
 
         return $paymentManual;
     }
+
+    public function cancelarSelecao(Request $request) {
+        if (!isset($request['presenteId'])) {
+            throw new Exception('Presente Id não encontrado');
+        }
+
+        $presente = Presente::find($request['presenteId']);
+
+        if (empty($presente->selected_by_user_id)) {
+            throw new Exception('Presente não está selecionado');
+        }
+
+        if (Auth::user()->id != $presente->selected_by_user_id && Auth::user()->role_id != 1) {
+            throw new Exception('Permissão Negada');
+        }
+
+        $presente->flg_disponivel      = 1;
+        $presente->selected_by_user_id = null;
+        $presente->selected_at         = null;
+        $presente->save();
+
+        return $presente;
+    }
 }
