@@ -41,6 +41,8 @@ class Presente extends Model
     const COTA      = 'COTA';
 
     public function verificaPresente() {
+        if (!empty($this->selected_by_user_id)) return;
+
         $valores = $this->verificaPagamentos();
         $valores->valorPago += $this->verificaPagamentosManuais();
 
