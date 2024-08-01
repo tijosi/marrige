@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $vlr_processando
  * @property string $selected_by_user_id
  * @property string $selected_at
+ * @property string $prioridade
  */
 
 class Presente extends Model
