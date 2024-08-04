@@ -62,8 +62,18 @@ class PresentesController extends Controller {
     }
 
     private function save( Request $request ) {
+        $request->validate([
+            'nome_presente'     => 'required | string',
+            'categoria'         => 'required',
+        ]);
+
         $data = $request->input();
+
         $image = $request->file('file');
+
+        if (empty($image)) {
+            throw new Exception('Imagem não encontrada');
+        }
 
         if (!in_array($image->extension(), ['jpg', 'png', 'jpeg', 'eps', 'psd'])) {
             throw new Exception('O Arquivo não é uma imagem');
@@ -86,6 +96,7 @@ class PresentesController extends Controller {
         $record->path_img           = $uploadImg;
         $record->img_url            = $data['link'] ?? null;
         $record->tags               = $data['tags'] ?? null;
+        $record->vlr_simbolico      = $data['vlrSimbolico'] ?? false;
         $record->flg_disponivel     = 1;
         $record->save();
 
