@@ -11,6 +11,8 @@ use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 class PresentesController extends Controller {
 
     public function handle( Request $request ) {
@@ -87,6 +89,10 @@ class PresentesController extends Controller {
             'public_id' => $imageName,
         ])->getSecurePAth();
 
+        if (empty($data['prioridade'])) {
+            $registros = DB::table('presentes')->count();
+        }
+
         $record = new Presente();
         $record->nome               = $data['nome_presente'];
         $record->valor              = $data['valor'] ?? 0;
@@ -97,6 +103,7 @@ class PresentesController extends Controller {
         $record->img_url            = $data['link'] ?? null;
         $record->tags               = $data['tags'] ?? null;
         $record->vlr_simbolico      = $data['vlrSimbolico'] ?? false;
+        $record->prioridade         = $data['prioridade'] ?? $registros + 1;
         $record->flg_disponivel     = 1;
         $record->save();
 
