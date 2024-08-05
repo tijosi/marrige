@@ -20,11 +20,12 @@ class LogUserActivity
     {
         if (auth()->check()) {
             DB::table('access_log')->insert([
-                'user_id'   => Auth::user()->id,
-                'url'       => $request->path(),
+                'user_id'       => Auth::user()->id,
+                'url'           => $request->path(),
                 'ip_address'    => $request->ip(),
                 'user_agent'    => $request->header('User_Agent'),
-                'dt_access' => Helper::toMySQL('now', true)
+                'parameters'    => json_encode($request->all()),
+                'dt_access'     => Helper::toMySQL('now', true)
             ]);
         }
 
