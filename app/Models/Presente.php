@@ -30,7 +30,8 @@ class Presente extends Model
 
     protected $table = 'presentes';
 
-    const vlrMinParcelaCota = 735;
+    const vlrMinParcelaCota = 850;
+    const vlrMinDiferençaCota = 300;
 
     public $timestamps = false;
 
@@ -128,7 +129,19 @@ class Presente extends Model
     }
 
     public function setCota() {
-        if($this->valor < (self::vlrMinParcelaCota * 2) || abs($this->valor - $this->vlr_presenteado - $this->vlr_processando) < 0.3) return;
+        if($this->valor < (self::vlrMinParcelaCota * 2)) {
+            if (abs($this->valor - $this->vlr_presenteado - $this->vlr_processando) < 0.3) return;
+
+            if ($this->valor > (self::vlrMinParcelaCota * 2 - self::vlrMinDiferençaCota)) {
+                $valorMinCotaAlterado       = self::vlrMinParcelaCota - (self::vlrMinDiferençaCota / 2);
+                $this->cotas                = 2;
+                $valorPendente              = $this->valor - $this->vlr_presenteado - $this->vlr_processando;
+                $this->cotas_disponiveis    = round($valorPendente / $valorMinCotaAlterado);
+                $this->vlr_cota             = $valorPendente / $this->cotas_disponiveis;
+            }
+
+            return;
+        }
 
         $this->cotas                = round($this->valor / self::vlrMinParcelaCota);
 
