@@ -20,7 +20,8 @@ class LogUserActivity
     {
         if (auth()->check()) {
             DB::table('access_log')->insert([
-                'user_id' => Auth::user()->id,
+                'user_id'   => Auth::user()->id,
+                'url'       => $request->path(),
                 'dt_access' => Helper::toMySQL('now', true)
             ]);
         }

@@ -23,7 +23,7 @@ class CheckUserActivityJob implements ShouldQueue
         if ($hasActivity) return;
 
         $this->scaleDownDynos();
-        $this->clearTable();
+        // $this->clearTable();
     }
 
     private function scaleDownDynos() {
