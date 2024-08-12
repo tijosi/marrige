@@ -30,7 +30,7 @@ class Presente extends Model
 
     protected $table = 'presentes';
 
-    const vlrMinParcelaCota = 850;
+    const vlrMinParcelaCota = 700;
     const vlrMinDiferençaCota = 300;
 
     public $timestamps = false;
