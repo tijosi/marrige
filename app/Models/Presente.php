@@ -129,6 +129,10 @@ class Presente extends Model
     }
 
     public function setCota() {
+        $valorPendente = $this->valor - $this->vlr_presenteado - $this->vlr_processando;
+
+        if ($valorPendente < 0.3) return;
+
         if($this->valor < (self::vlrMinParcelaCota * 2)) {
             if (abs($this->valor - $this->vlr_presenteado - $this->vlr_processando) < 0.3) return;
 
@@ -149,7 +153,6 @@ class Presente extends Model
             $this->cotas--;
         }
 
-        $valorPendente              = $this->valor - $this->vlr_presenteado - $this->vlr_processando;
         $this->cotas_disponiveis    = round($valorPendente / self::vlrMinParcelaCota);
 
         if (($valorPendente / $this->cotas_disponiveis) <= self::vlrMinParcelaCota) {
