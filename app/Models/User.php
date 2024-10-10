@@ -7,6 +7,7 @@
  * @property string role_id
  * @property string created_at
  * @property string updated_at
+ * @property string flg_aprovado
  */
 
 namespace App\Models;
@@ -33,6 +34,7 @@ class User extends Authenticatable
         'role_id',
         'created_at',
         'updated_at',
+        'flg_aprovado',
     ];
 
     /**
