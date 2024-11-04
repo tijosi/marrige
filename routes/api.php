@@ -37,6 +37,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::any('/padrinhos', [PadrinhosController::class, 'handle']);
 });
 
+Route::any('/presentes-cha-panela',                         [PresentesController::class, 'listAllChaPanela']);
+Route::post('/presentes/confirmar-cha-panela',              [PresentesController::class, 'confirmarPresenteChaPanela']);
+
 Route::get('/', function() {
     return response()->json([
         'status' => 'success',

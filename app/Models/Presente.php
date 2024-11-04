@@ -10,19 +10,23 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * App\Models\Presente
  *
- * @property string $nome
- * @property string $valor
- * @property string $level
- * @property string $name_img
- * @property string $img_url
- * @property string $flg_disponivel
- * @property string $payment_url
- * @property string $vlr_presenteado
- * @property string $vlr_processando
- * @property string $selected_by_user_id
- * @property string $selected_at
- * @property string $prioridade
- * @property string $vlr_simbolico
+ * @property string nome
+ * @property string valor
+ * @property string vlr_simbolico
+ * @property string cha_panela
+ * @property string level
+ * @property string prioridade
+ * @property string vlr_processando
+ * @property string vlr_presenteado
+ * @property string name_img
+ * @property string img_url
+ * @property string flg_disponivel
+ * @property string selected_by_name
+ * @property string selected_by_user_id
+ * @property string selected_at
+ * @property string path_img
+ * @property string descricao
+ * @property string tags
  */
 
 class Presente extends Model

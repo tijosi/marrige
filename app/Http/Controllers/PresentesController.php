@@ -63,6 +63,11 @@ class PresentesController extends Controller {
         return $presentes->toArray();
     }
 
+    public function listAllChaPanela() {
+        $presentes = Presente::where('cha_panela', '=', 1)->get();
+        return $presentes->toArray();
+    }
+
     private function save( Request $request ) {
         $request->validate([
             'nome_presente'     => 'required | string',
@@ -97,15 +102,16 @@ class PresentesController extends Controller {
 
         $record = new Presente();
         $record->nome               = $data['nome_presente'];
-        $record->valor              = $data['valor'] ?? 0;
+        $record->valor              = $data['valor']        ?? 0;
         $record->level              = $data['categoria'];
-        $record->descricao          = $data['descricao'] ?? null;
+        $record->descricao          = $data['descricao']    ?? null;
         $record->name_img           = $imageName;
         $record->path_img           = $uploadImg;
-        $record->img_url            = $data['link'] ?? null;
-        $record->tags               = $data['tags'] ?? null;
+        $record->img_url            = $data['link']         ?? null;
+        $record->tags               = $data['tags']         ?? null;
         $record->vlr_simbolico      = $data['vlrSimbolico'] ? 1 : 0;
-        $record->prioridade         = $data['prioridade'] ?? $registros + 1;
+        $record->cha_panela         = $data['chaPanela']    ? 1 : 0;
+        $record->prioridade         = $data['prioridade']   ?? $registros + 1;
         $record->flg_disponivel     = 1;
         $record->save();
 
@@ -177,6 +183,24 @@ class PresentesController extends Controller {
                 return $presente;
                 break;
         }
+    }
+
+    public function confirmarPresenteChaPanela(Request $request) {
+        if (empty($request['presenteId'])) {
+            throw new Exception('Por favor passsar o ID do presente');
+        }
+
+        /** @var Presente */
+        $presente = Presente::find($request['presenteId']);
+        if ($presente->flg_disponivel   == 0)                           throw new Exception('Presente já foi Selecionado');
+        if ($presente->cha_panela == 0 || $presente->cha_panela == null)  throw new Exception('Presente não pertence ao Chá de Panela');
+
+        $presente->flg_disponivel   = 0;
+        $presente->selected_by_name = $request['nome'];
+        $presente->selected_at      = Helper::toMySQL('now', true);
+        $presente->save();
+
+        return $presente;
     }
 
     public function confirmarPagamentoManual(Request $request) {
