@@ -40,7 +40,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 Route::any('/presentes-cha-panela',                         [PresentesController::class, 'listAllChaPanela']);
 Route::post('/presentes/confirmar-cha-panela',              [PresentesController::class, 'confirmarPresenteChaPanela']);
 
-Route::get('/', function() {
+Route::get('/api', function() {
     return response()->json([
         'status' => 'success',
         'data' => 'REST API Funcionando!'
